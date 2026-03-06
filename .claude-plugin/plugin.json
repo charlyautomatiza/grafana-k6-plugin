@@ -1,0 +1,208 @@
+{
+  "name": "grafana-k6-skill",
+  "version": "1.0.0",
+  "description": "Multi-agent k6 performance testing skill with deterministic script generation and interactive ambiguity resolution for HTTP, gRPC, and browser testing",
+  "author": "charlyautomatiza",
+  "repository": "charlyautomatiza/grafana-k6-skill",
+  "compatibility": {
+    "agents": ["claude", "copilot", "gemini"],
+    "minVersions": {
+      "claude": "3.0",
+      "copilot": "1.0",
+      "gemini": "1.0"
+    }
+  },
+  "skills": [
+    {
+      "name": "k6-core",
+      "path": "../skills/k6-core/SKILL.md",
+      "userInvocable": true,
+      "disableModelInvocation": true
+    }
+  ],
+  "commands": [
+    {
+      "command": "/k6.plan",
+      "description": "Plan and generate k6 test scenarios with interactive parameter resolution",
+      "parameters": {
+        "scenario": {
+          "type": "string",
+          "description": "Test scenario type: load, stress, spike, soak, smoke",
+          "required": false
+        },
+        "target": {
+          "type": "string",
+          "description": "Target URL or endpoint to test",
+          "required": false
+        },
+        "sla": {
+          "type": "string",
+          "description": "SLA requirements (e.g., p99<500ms)",
+          "required": false
+        },
+        "profile": {
+          "type": "string",
+          "description": "Load profile: minimal, standard, aggressive",
+          "default": "standard",
+          "required": false
+        },
+        "protocol": {
+          "type": "string",
+          "description": "Protocol type: http, grpc, browser",
+          "default": "http",
+          "required": false
+        }
+      }
+    },
+    {
+      "command": "/k6.optimize",
+      "description": "Optimize existing k6 scripts for performance and best practices",
+      "parameters": {
+        "script": {
+          "type": "string",
+          "description": "Path to k6 script file to optimize",
+          "required": true
+        },
+        "focus": {
+          "type": "string",
+          "description": "Optimization focus area: thresholds, checks, scenarios, performance, all",
+          "default": "all",
+          "required": false
+        }
+      }
+    },
+    {
+      "command": "/k6.validate",
+      "description": "Validate k6 script syntax, structure, and best practices compliance",
+      "parameters": {
+        "script": {
+          "type": "string",
+          "description": "Path to k6 script file to validate",
+          "required": true
+        },
+        "strict": {
+          "type": "boolean",
+          "description": "Enable strict validation including style and best practices",
+          "default": true,
+          "required": false
+        }
+      }
+    },
+    {
+      "command": "/k6.thresholds",
+      "description": "Generate or configure threshold definitions for SLA enforcement",
+      "parameters": {
+        "target": {
+          "type": "string",
+          "description": "Target metric or script to configure thresholds for",
+          "required": false
+        },
+        "metrics": {
+          "type": "string",
+          "description": "Metrics to track: p95, p99, rate, custom (comma-separated)",
+          "default": "p95,p99,rate",
+          "required": false
+        }
+      }
+    },
+    {
+      "command": "/k6.run",
+      "description": "Generate k6 run command with proper environment and configuration",
+      "parameters": {
+        "script": {
+          "type": "string",
+          "description": "Path to k6 script to execute",
+          "required": true
+        },
+        "env": {
+          "type": "string",
+          "description": "Environment context: local, dev, staging, prod",
+          "default": "local",
+          "required": false
+        },
+        "duration": {
+          "type": "string",
+          "description": "Test duration override (e.g., 30s, 5m)",
+          "required": false
+        }
+      }
+    }
+  ],
+  "tools": [
+    {
+      "name": "AskUserQuestion",
+      "description": "Interactive tool for resolving ambiguities by asking up to 3 clarifying questions when critical parameters are missing (Claude)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "description": "Array of questions to ask the user (max 3)",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the question"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "The question text to display to the user"
+                },
+                "options": {
+                  "type": "array",
+                  "description": "Optional predefined answer choices",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "Whether an answer is required",
+                  "default": true
+                }
+              },
+              "required": ["id", "text"]
+            }
+          }
+        },
+        "required": ["questions"]
+      }
+    },
+    {
+      "name": "ask_user",
+      "description": "Interactive tool for Gemini to ask clarifying questions when parameters are ambiguous",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "Question to ask the user"
+          },
+          "choices": {
+            "type": "array",
+            "description": "Optional multiple choice options",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["question"]
+      }
+    }
+  ],
+  "versionHistory": [
+    {
+      "version": "1.0.0",
+      "date": "2026-03-05",
+      "changes": [
+        "Initial release with multi-agent support",
+        "Commands: plan, optimize, validate, thresholds, run",
+        "Protocols: HTTP, gRPC, k6/browser",
+        "Interactive ambiguity resolution with 3-question protocol",
+        "Comprehensive examples and best practices"
+      ]
+    }
+  ]
+}
