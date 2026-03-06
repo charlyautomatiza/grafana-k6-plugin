@@ -30,6 +30,44 @@ When multiple actions could apply, follow this priority:
 validate > optimize > thresholds > plan > run
 ```
 
+## No Hardcoded Values Rule
+
+**CRITICAL**: Scripts MUST NOT contain hardcoded URLs, API tokens, usernames, or credentials.
+
+### Rule
+1. **URLs MUST use environment variables or config files**
+   - ❌ BAD: `http.get('https://api.example.com/users')`
+   - ✅ GOOD: `http.get(`${__ENV.BASE_URL}/users`)`
+   
+2. **API Tokens MUST use environment variables**
+   - ❌ BAD: `const token = 'secret-token-123';`
+   - ✅ GOOD: `const token = __ENV.API_TOKEN || '';`
+
+3. **Test Data/Credentials MUST use**
+   - CSV/JSON files from disk
+   - Environment variables
+   - Configuration files
+   - NEVER hardcoded strings in script
+
+### When User Suggests Hardcoded Values
+If user provides target URL or credentials without parameterization:
+1. Generate script with environment variables
+2. Show usage with `--env` flags
+3. Add comment: `// Usage: k6 run --env BASE_URL=... --env API_TOKEN=... script.js`
+4. If user insists on hardcode, invoke **3-Question Protocol** to understand why
+
+### Allowed Exceptions (Only for Defaults)
+```javascript
+// OK: Default value if env var not set
+const baseUrl = __ENV.BASE_URL || 'http://localhost:3000';
+const timeout = __ENV.TIMEOUT || '30s';
+```
+
+Defaults should be:
+- Safe (localhost, public test services)
+- Non-sensitive (no real tokens)
+- Development-only values
+
 ## Critical Parameter Rules
 
 ### For /k6.plan Command
@@ -171,6 +209,161 @@ scenarios: {
 - Limited standard library (check k6 docs)
 - Use k6-provided modules only
 
+## Configuration & Environment Variables
+
+All k6 scripts SHOULD be parameterized for flexibility across environments.
+
+### Environment Variable Patterns
+
+**Using `__ENV` with defaults:**
+```javascript
+const baseUrl = __ENV.BASE_URL || 'http://localhost:3000';
+const apiToken = __ENV.API_TOKEN || '';
+const environment = __ENV.ENVIRONMENT || 'local';
+const timeout = __ENV.TIMEOUT || '30s';
+const dataFile = __ENV.DATA_FILE || './data/users.csv';
+```
+
+**Passing variables to k6:**
+```bash
+# Via --env flag (recommended)
+k6 run --env BASE_URL=https://api.example.com script.js
+k6 run -e BASE_URL=https://api.example.com -e API_TOKEN=xyz script.js
+
+# Via system environment
+export BASE_URL=https://api.example.com
+k6 run script.js
+
+# Via .env file (source first)
+source .env
+k6 run script.js
+```
+
+**Configuration precedence (lowest to highest):**
+1. Script defaults (`__ENV.VAR || 'default'`)
+2. k6.json config file
+3. Script export const options
+4. Environment variables (`--env` flags)
+5. CLI flags (`--vus`, `--duration`) ← Wins
+
+### Configuration Files
+
+Use k6.json for shared configuration:
+```json
+{
+  "stages": [
+    { "duration": "2m", "target": 20 },
+    { "duration": "5m", "target": 20 },
+    { "duration": "2m", "target": 0 }
+  ],
+  "thresholds": {
+    "http_req_duration": ["p(95)<500"],
+    "http_req_failed": ["rate<0.01"]
+  }
+}
+```
+
+## Data Management
+
+Load test data from external sources, NOT hardcoded.
+
+### CSV Data (Tabular)
+```javascript
+import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
+import { SharedArray } from 'k6/data';
+
+const dataFile = __ENV.DATA_FILE || './users.csv';
+const users = new SharedArray('users', function () {
+  return papaparse.parse(open(dataFile), { header: true }).data;
+});
+
+export default function () {
+  const user = users[__VU % users.length];  // Round-robin
+  // Use user.username, user.password, etc.
+}
+```
+
+**Best for:**
+- User credentials (username, password, email)
+- Tabular data from spreadsheet exports
+- Large datasets in rows/columns format
+
+### JSON Data (Structured)
+```javascript
+import { SharedArray } from 'k6/data';
+
+const dataFile = __ENV.DATA_FILE || './products.json';
+const products = new SharedArray('products', function () {
+  return JSON.parse(open(dataFile)).products;
+});
+
+export default function () {
+  const product = products[(__VU - 1) % products.length];  // Per-VU
+  // Use product.id, product.price, etc.
+}
+```
+
+**Best for:**
+- Complex nested objects
+- Data with mixed types (numbers, booleans, objects)
+- Configuration-like data
+
+### Data Assignment Strategies
+- **Round-robin**: `data[__VU % data.length]` - Evenly distributes, allows repeats
+- **Per-VU**: `data[(__VU - 1) % data.length]` - Each VU gets unique data
+- **Sequential**: `data[scenario.iterationInTest % data.length]` - Progressive through data
+
+**CRITICAL: Always use `SharedArray`** - Prevents memory explosion. Each VU gets reference, not copy.
+
+**See [Data Management Examples](../../examples/data-management) for complete patterns.**
+
+## Dashboard & Local Metrics Visualization
+
+Monitor test metrics in real-time using k6's web dashboard.
+
+### Enable Dashboard
+```bash
+K6_WEB_DASHBOARD=true k6 run script.js
+```
+
+### Dashboard Configuration
+```bash
+K6_WEB_DASHBOARD=true \
+K6_WEB_DASHBOARD_HOST=0.0.0.0 \
+K6_WEB_DASHBOARD_PORT=5665 \
+K6_WEB_DASHBOARD_OPEN=true \
+K6_WEB_DASHBOARD_PERIOD=5s \
+K6_WEB_DASHBOARD_EXPORT=report.html \
+k6 run script.js
+```
+
+**Key environment variables:**
+- `K6_WEB_DASHBOARD=true` - Enable dashboard (default: false)
+- `K6_WEB_DASHBOARD_OPEN=true` - Auto-open in browser
+- `K6_WEB_DASHBOARD_EXPORT=report.html` - Export HTML report when done
+- `K6_WEB_DASHBOARD_PERIOD=5s` - Dashboard update frequency
+- `K6_WEB_DASHBOARD_PORT=5665` - Dashboard port (default)
+
+### Metrics Shown in Dashboard
+- **HTTP Metrics**: Duration (p50, p75, p95, p99), Error rate, Throughput
+- **Scenario Progress**: VU count, Active/completed iterations, Timeline
+- **Checks**: Pass/fail rate for functional validations
+- **Custom Metrics**: Any custom metrics defined in script
+
+### RED Method Metrics
+Monitor these core metrics during load test:
+- **Requests**: How many requests/second (throughput)
+- **Errors**: What percentage are failing (availability)
+- **Duration**: What are response times (latency)
+
+```javascript
+thresholds: {
+  'http_reqs': ['rate>10'],              // Throughput check
+  'http_req_failed': ['rate<0.01'],      // Error rate check
+  'http_req_duration': ['p(95)<500'],    // Latency check
+}
+```
+
 </rules>
 
 <grammar>
@@ -195,10 +388,26 @@ Generate a k6 test script from requirements.
 - `duration`: Override duration, e.g., "10m"
 - `vus`: Override VU count, e.g., "50"
 
+**Generated Scripts ALWAYS:**
+- ✅ Use `__ENV` for BASE_URL (never hardcoded)
+- ✅ Use `__ENV` for API_TOKEN, credentials
+- ✅ Include usage comment: `// Usage: k6 run --env BASE_URL=... script.js`
+- ✅ Provide defaults for all env vars
+- ✅ Include 2+ meaningful checks
+- ✅ Include 2+ SLA-aligned thresholds
+- ✅ Use appropriate executor type (default: ramping-vus)
+
 **Examples**:
 - `/k6.plan scenario=load target=https://api.example.com sla=p95<300ms`
 - `/k6.plan scenario=stress target=https://test.com sla=p99<1s profile=aggressive`
 - `/k6.plan protocol=browser target=https://shop.example.com scenario=load`
+
+**Note on Target URL:**
+The `target` parameter is for documentation and data only. Generated script will use:
+```javascript
+const baseUrl = __ENV.BASE_URL || 'https://api.example.com';  // Parameterized!
+```
+Users run with: `k6 run --env BASE_URL=https://actual-url.com script.js`
 
 ### /k6.optimize
 Optimize an existing k6 script for performance and best practices.
@@ -253,6 +462,77 @@ Generate k6 execution command with proper configuration.
 **Examples**:
 - `/k6.run script=load-test.js env=staging`
 - `/k6.run script=api-test.js duration=5m vus=100`
+
+### /k6.executor
+Help select the right executor type with interactive guidance.
+
+**Syntax**: `/k6.executor goal=[description]`
+
+**Parameters**:
+- `goal`: Natural language description of test goal
+
+**Invokes 3-Question Protocol to determine:**
+1. Do you need to control VU count or request rate?
+2. Does load stay fixed or change over time?
+3. Is duration time-based or iteration-based?
+
+**Examples**:
+- `/k6.executor goal=baseline testing with 50 users`
+- `/k6.executor goal=find breaking point progressively`
+- `/k6.executor goal=validate we can handle 500 requests per second`
+
+**Output**: Recommended executor type + rationale + example config
+
+### /k6.data
+Generate data-driven load test configuration with external data source.
+
+**Syntax**: `/k6.data source=[csv|json] dataType=[users|products|custom] vus=[n] assignment=[round-robin|per-vu|sequential]`
+
+**Parameters**:
+- `source`: csv | json (CRITICAL - file format)
+- `dataType`: users | products | orders | custom (what data represents)
+- `vus`: Number of virtual users (optional, for recommending data size)
+- `assignment`: round-robin | per-vu | sequential (optional, default: round-robin)
+
+**Invokes questions about:**
+1. What's the file format? (CSV or JSON)
+2. What type of data? (users, products, test data)
+3. How to distribute data to VUs? (round-robin, per-VU, sequential)
+
+**Output:**
+- Complete data loading snipp with SharedArray
+- Example data file format
+- Usage instructions with `--env DATA_FILE=...`
+
+**Examples**:
+- `/k6.data source=csv dataType=users`
+- `/k6.data source=json dataType=products vus=20 assignment=per-vu`
+- `/k6.data source=csv dataType=custom`
+
+### /k6.config
+Generate configuration setup for multi-environment testing.
+
+**Syntax**: `/k6.config environments=[local,dev,staging,prod] setup=[true|false]`
+
+**Parameters**:
+- `environments`: Comma-separated environment list (default: local,staging,prod)
+- `setup`: true = full setup (files + examples) | false = just examples (default: true)
+
+**Invokes questions about:**
+1. Which environments to support?
+2. Should we set up files or just show examples?
+3. Any special requirements per environment?
+
+**Output:**
+- Config files for each environment (k6-local.json, k6-staging.json, etc.)
+- Example script using environment-specific configuration
+- .env.example template
+- Usage instructions
+
+**Examples**:
+- `/k6.config environments=local,dev,staging,prod`
+- `/k6.config environments=staging,prod setup=true`
+- `/k6.config setup=false` (just examples, no file creation)
 
 </grammar>
 
