@@ -245,7 +245,8 @@ I need to clarify a few details before generating your k6 script:
 ```
 grafana-k6-skill/
 ├── .claude-plugin/
-│   └── plugin.json          # Multi-agent metadata & tool declarations
+│   ├── plugin.json          # Multi-agent metadata & tool declarations
+│   └── marketplace.json     # Self-hosted marketplace catalog
 ├── skills/
 │   └── k6-core/
 │       └── SKILL.md         # Main skill logic, rules, & examples
@@ -259,6 +260,51 @@ grafana-k6-skill/
 ├── README.md               # This file
 └── .gitignore
 ```
+
+## 📦 Distribution & Publishing
+
+This skill is designed with **dual publishing** in mind - one source of truth for multiple distribution channels:
+
+### skills.sh
+
+Install directly from GitHub via skills CLI:
+
+```bash
+npx skills add charlyautomatiza/grafana-k6-skill
+```
+
+The skill follows [Agent Skills specification](https://agentskills.io/specification) and is automatically discoverable by the skills.sh ecosystem.
+
+### Claude Code Marketplace
+
+#### Option 1: Direct Installation (Current)
+```bash
+git clone https://github.com/charlyautomatiza/grafana-k6-skill.git
+cd grafana-k6-skill
+./install.sh
+```
+
+#### Option 2: Self-Hosted Marketplace
+Load the marketplace in Claude Code using:
+```
+https://raw.githubusercontent.com/charlyautomatiza/grafana-k6-skill/main/.claude-plugin/marketplace.json
+```
+
+#### Option 3: Official Anthropic Marketplace
+*Coming soon* - Submission process in progress.
+
+### Compatibility Status
+
+| Channel | Status | Documentation |
+|---------|--------|---------------|
+| **skills.sh CLI** | ✅ Ready | `npx skills add charlyautomatiza/grafana-k6-skill` |
+| **Claude Plugin** | ✅ Ready | See installation above |
+| **Self-Hosted Marketplace** | ✅ Ready | [marketplace.json](.claude-plugin/marketplace.json) |
+| **Official Claude Marketplace** | 🔄 Pending | Submission process |
+
+For detailed compatibility analysis and testing procedures, see:
+- [docs/COMPATIBILITY-ANALYSIS.md](docs/COMPATIBILITY-ANALYSIS.md) - Comprehensive compatibility validation
+- [docs/TESTING.md](docs/TESTING.md) - Testing and validation procedures
 
 ## 🔧 Configuration
 
@@ -402,10 +448,16 @@ rm -rf ~/.agents/skills/k6-core
 
 ## 📖 Resources
 
+### k6 & Grafana
 - [k6 Documentation](https://k6.io/docs/)
 - [k6 Examples](https://k6.io/docs/examples/)
 - [k6 Community](https://community.k6.io/)
 - [Grafana Cloud k6](https://grafana.com/products/cloud/k6/)
+
+### Skills Distribution
+- [skills.sh](https://skills.sh) - Agent Skills ecosystem
+- [Agent Skills Specification](https://agentskills.io/specification) - Format specification
+- [Claude Code Plugins](https://code.claude.com/docs/en/plugins) - Plugin documentation
 
 ## 📄 License
 
@@ -419,7 +471,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [Grafana k6](https://k6.io/) for the excellent performance testing tool
+- [Grafana k6](https://grafana.com/oss/k6/) for the excellent performance testing tool
 - k6 community for best practices and patterns
 - AI agent platforms for enabling skill extensibility
 
