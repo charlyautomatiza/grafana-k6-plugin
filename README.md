@@ -8,7 +8,7 @@
 
 ## 🎯 Overview
 
-This skill enables Claude to generate, optimize, and validate k6 performance testing scripts following official best practices. It provides deterministic recommendations, interactive parameter resolution, and comprehensive support for HTTP, gRPC, and browser testing protocols.
+This skill enables Claude to plan, generate, and validate k6 performance testing scripts following official best practices. It provides deterministic recommendations, interactive parameter resolution, and comprehensive support for HTTP, gRPC, and browser testing protocols.
 
 ### Key Features
 
@@ -16,7 +16,7 @@ This skill enables Claude to generate, optimize, and validate k6 performance tes
 - **💬 Interactive Clarification**: 3-question protocol for resolving ambiguities
 - **📊 Protocol Support**: HTTP, gRPC, and k6/browser
 - **✅ Best Practices**: Follows official k6.io documentation patterns
-- **🔍 Validation**: Built-in script validation and optimization
+- **🔍 Validation**: Built-in script validation and quality checks
 - **📝 Self-Contained Skills**: All logic embedded in SKILL.md files
 - **🏗️ Standards Compliant**: Follows official Claude Skills specification
 
@@ -26,7 +26,7 @@ Version 0.1.0 is the initial release with architecture aligned to the **official
 
 **Architecture**:
 - ✅ **Self-contained SKILL.md files** with all logic embedded
-- ✅ **References directory** for examples and documentation
+- ✅ **Per-skill references directories** for focused guidance
 - ✅ **Simplified plugin.json** with only standard fields (auto-discovery of skills)
 - ✅ **Four core skills**: k6-plan, k6-executor, k6-config, k6-validate
 - ✅ **Deterministic recommendations** - same inputs always produce identical outputs
@@ -224,29 +224,19 @@ This skill follows the **official Claude Skills specification**. Each skill is a
 grafana-k6-skill/
 ├── .claude-plugin/
 │   ├── plugin.json          # Skill metadata (standard fields only)
-│   └── marketplace.json     # Self-hosted marketplace catalog
 ├── skills/                  # Self-contained skills
 │   ├── k6-plan/
-│   │   └── SKILL.md        # Complete planning logic + examples
+│   │   ├── SKILL.md        # Complete planning logic + examples
+│   │   └── references/     # Protocol/load/SLA/data guides
 │   ├── k6-executor/
-│   │   └── SKILL.md        # Executor selection guide
+│   │   ├── SKILL.md        # Executor selection guide
+│   │   └── references/     # Decision matrix and support docs
 │   ├── k6-validate/
-│   │   └── SKILL.md        # Validation checklist
+│   │   ├── SKILL.md        # Validation checklist
+│   │   └── references/     # Severity and validation rules
 │   └── k6-config/
-│       └── SKILL.md        # Multi-env configuration
-├── references/              # Reference materials (non-executable)
-│   ├── examples/           # Sample k6 scripts
-│   │   ├── http/
-│   │   ├── grpc/
-│   │   └── browser/
-│   ├── load-profiles.md    # Load profile definitions
-│   ├── sla-defaults.md     # SLA recommendation table
-│   ├── protocol-guide.md   # Protocol-specific patterns
-│   └── data-integration.md # CSV/JSON usage patterns
-├── docs/                   # Architecture & guides
-│   ├── architecture/
-│   ├── testing/
-│   └── publishing/
+│       ├── SKILL.md        # Multi-env configuration
+│       └── references/     # Config/load/SLA/data guides
 ├── LICENSE
 └── README.md
 ```
@@ -286,11 +276,7 @@ The skill follows the [Agent Skills specification](https://agentskills.io/specif
 |---------|--------|-------------------|
 | **skills.sh CLI** | ✅ Ready | `npx skills add charlyautomatiza/grafana-k6-skill` |
 | **Claude Desktop** | ✅ Ready | Auto-discovery or manual git clone |
-| **Self-Hosted** | ✅ Ready | See [marketplace.json](.claude-plugin/marketplace.json) |
-
-For detailed architecture and implementation details, see:
-- [docs/architecture/claude-skills-v2-implementation-plan.md](docs/architecture/claude-skills-v2-implementation-plan.md)
-- [docs/testing/TESTING.md](docs/testing/TESTING.md)
+| **Self-Hosted** | ⚠️ Not configured in this repository | Requires additional marketplace catalog setup |
 
 ## 🔧 Customization
 
@@ -300,30 +286,20 @@ Skills can be customized by editing the SKILL.md files directly:
 - `skills/k6-validate/SKILL.md` - Customize validation rules
 - `skills/k6-config/SKILL.md` - Change configuration patterns
 
-Reference materials in `references/` can also be updated to provide additional context for Claude.
+Reference materials in each skill's `references/` directory can also be updated to provide additional context for Claude.
 
-## 📚 Examples
+## 📚 Reference Guides
 
-See the `references/examples/` directory for complete, runnable k6 scripts:
+Each skill includes local references with validated patterns and implementation details:
 
-### HTTP Examples
-- **simple-get.js**: Basic HTTP GET load test
-- **post-with-auth.js**: POST with authentication
-- **batch-requests.js**: Parallel requests using http.batch
+- `skills/k6-plan/references/` — protocol patterns, SLA defaults, load profiles, data integration
+- `skills/k6-executor/references/` — executor decision matrix and profile guidance
+- `skills/k6-validate/references/` — severity model, threshold/load validation rules, testing guide
+- `skills/k6-config/references/` — environment configuration patterns and defaults
 
-### gRPC Examples
-- **basic-service.js**: gRPC service load testing
-
-### Browser Examples
-- **user-journey.js**: Complete user flow with k6/browser
-
-### Advanced Examples
-- **multi-stage.js**: Complex scenario with multiple stages
-- **sla-config.js**: Comprehensive threshold configurations
-
-Run any example:
+Generate a runnable script via skill command:
 ```bash
-k6 run references/examples/http/simple-get.js
+/k6-plan scenario=load target=https://api.example.com sla=p95<300ms output=script
 ```
 
 ## 🧪 Validation

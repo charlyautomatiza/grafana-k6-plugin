@@ -2,21 +2,12 @@
 name: k6-validate
 description: Validate k6 scripts against structural, performance, and reliability standards. Use when users ask to validate a k6 script, review k6 test quality, or detect anti-patterns before execution.
 user-invokable: true
-disable-model-invocation: true
+disable-model-invocation: false
 license: MIT
 metadata:
-  version: 2.0.0
+  version: 0.1.0
   category: performance-testing
 ---
-
-# k6-validate
-
-Analyze k6 scripts and provide actionable validation feedback.
-
-## Use When
-
-- User says: "validate my k6 script"
-- User says: "review this k6 test before I run it"
 - User says: "find issues in my k6 scenario"
 - User says: "check if my thresholds and load profile are correct"
 

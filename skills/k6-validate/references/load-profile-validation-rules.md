@@ -80,12 +80,16 @@ export const options = {
 
 // ✅ FIXED
 export const options = {
-  executor: 'constant-arrival-rate',
-  rate: 100,
-  timeUnit: '1s',
-  duration: '5m',
-  preAllocatedVUs: 10,
-  maxVUs: 100,  // capacity guard
+  scenarios: {
+    api_rate: {
+      executor: 'constant-arrival-rate',
+      rate: 100,
+      timeUnit: '1s',
+      duration: '5m',
+      preAllocatedVUs: 10,
+      maxVUs: 100, // capacity guard
+    },
+  },
 };
 ```
 
@@ -174,7 +178,7 @@ stages: [
 - **Validation:** `preAllocatedVUs ≤ maxVUs`
 
 ### ramping-arrival-rate
-- **Required:** `stages` (each with rate and target), `timeUnit`, `preAllocatedVUs`, `maxVUs`
+- **Required:** `stages` (each with `duration` and `target`), `timeUnit`, `preAllocatedVUs`, `maxVUs`
 - **Validation:** `preAllocatedVUs ≤ maxVUs`
 
 ### per-vu-iterations
@@ -226,20 +230,26 @@ export const options = {
 // ⚠️ WARNING: Rate too high for preAllocatedVUs
 export const options = {
   executor: 'constant-arrival-rate',
-  rate: 1000,        // 1000 req/s
+  rate: 1000, // 1000 req/s
   timeUnit: '1s',
-  preAllocatedVUs: 5,  // likely insufficient!
+  preAllocatedVUs: 5, // likely insufficient!
   maxVUs: 20,
+  duration: '5m',
 };
 
-// Calculation: 1000 req/s ÷ 5 VUs = 200 req/vuper second
+// Calculation: 1000 req/s ÷ 5 VUs = 200 req/vu per second
 // Typical VU capacity: ~50–100 req/s, so 5 VUs can support ~250–500 req/s total
 // Suggestion: Increase preAllocatedVUs and maxVUs
 export const options = {
-  executor: 'constant-arrival-rate',
-  rate: 1000,
-  timeUnit: '1s',
-  preAllocatedVUs: 20,  // 20–50 req/s per VU = ~1000 req/s total
-  maxVUs: 100,
+  scenarios: {
+    high_rate_api: {
+      executor: 'constant-arrival-rate',
+      rate: 1000,
+      timeUnit: '1s',
+      preAllocatedVUs: 20, // 20–50 req/s per VU = ~1000 req/s total
+      maxVUs: 100,
+      duration: '5m',
+    },
+  },
 };
 ```

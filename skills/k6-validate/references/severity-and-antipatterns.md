@@ -130,14 +130,16 @@ export const options = {
 };
 
 // ✅ FIXED
-import { Executor } from 'k6/execution';
-
 export const options = {
-  executor: 'ramping-vus', // explicit
-  stages: [
-    { duration: '1m', target: 10 },
-    { duration: '5m', target: 10 },
-    { duration: '1m', target: 0 },
-  ],
+  scenarios: {
+    main: {
+      executor: 'ramping-vus',
+      stages: [
+        { duration: '1m', target: 10 },
+        { duration: '5m', target: 10 },
+        { duration: '1m', target: 0 },
+      ],
+    },
+  },
 };
 ```

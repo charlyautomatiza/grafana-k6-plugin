@@ -2,23 +2,13 @@
 name: k6-plan
 description: Plan deterministic k6 performance tests from goals, SLA, and protocol context. Use when users ask to plan a load test, set up a stress/spike/soak strategy, or request a full k6 test blueprint.
 user-invokable: true
-disable-model-invocation: true
+disable-model-invocation: false
 license: MIT
 metadata:
-  version: 2.0.0
+  version: 0.1.0
   category: performance-testing
   protocols: [http, grpc, browser]
 ---
-
-# k6-plan
-
-Generate actionable k6 performance test plans with deterministic recommendations.
-
-## Use When
-
-- User says: "plan a k6 load test"
-- User says: "setup a stress test"
-- User says: "design a spike test for this endpoint"
 - User says: "build a complete k6 test plan with SLA"
 
 ## Tool Discovery Protocol

@@ -2,21 +2,12 @@
 name: k6-executor
 description: Select the correct k6 executor from user goals and constraints. Use when users ask which executor to use, how to model load, or how to convert a test objective into a valid scenario setup.
 user-invokable: true
-disable-model-invocation: true
+disable-model-invocation: false
 license: MIT
 metadata:
-  version: 2.0.0
+  version: 0.1.0
   category: performance-testing
 ---
-
-# k6-executor
-
-Help users select the appropriate k6 executor based on test goals.
-
-## Use When
-
-- User says: "which k6 executor should I use"
-- User says: "help me choose between ramping-vus and arrival-rate"
 - User says: "convert this load goal into a k6 scenario"
 - User says: "how do I model 500 rps in k6"
 

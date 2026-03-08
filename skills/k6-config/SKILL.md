@@ -2,21 +2,12 @@
 name: k6-config
 description: Build production-ready k6 configuration for multi-environment testing. Use when users ask to create k6 config files, set up k6 environments, or define thresholds and load settings per environment.
 user-invokable: true
-disable-model-invocation: true
+disable-model-invocation: false
 license: MIT
 metadata:
-  version: 2.0.0
+  version: 0.1.0
   category: performance-testing
 ---
-
-# k6-config
-
-Generate environment-specific k6 configurations.
-
-## Use When
-
-- User says: "create k6 config"
-- User says: "setup k6 environments"
 - User says: "generate dev/staging/prod k6 settings"
 - User says: "define thresholds and VUs by environment"
 

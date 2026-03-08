@@ -7,8 +7,10 @@
 import http from 'k6/http';
 import { check } from 'k6';
 
+const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+
 export default function () {
-  const response = http.get('https://api.example.com/users', {
+  const response = http.get(`${BASE_URL}/users`, {
     timeout: '30s',
     tags: { name: 'get-users' },
   });
@@ -24,11 +26,13 @@ export default function () {
 ```javascript
 import http from 'k6/http';
 
+const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+
 export default function () {
   const responses = http.batch([
-    ['GET', 'https://api.example.com/users'],
-    ['GET', 'https://api.example.com/products'],
-    ['POST', 'https://api.example.com/orders', JSON.stringify({ item: 'test' })],
+    ['GET', `${BASE_URL}/users`],
+    ['GET', `${BASE_URL}/products`],
+    ['POST', `${BASE_URL}/orders`, JSON.stringify({ item: 'test' })],
   ]);
   
   // Process responses[0], responses[1]
@@ -39,21 +43,31 @@ export default function () {
 ```javascript
 import http from 'k6/http';
 
+const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+
 export default function () {
+  const username = __ENV.API_USER || 'test-user';
+  const password = __ENV.API_PASSWORD || 'test-password';
+  const token = __ENV.API_TOKEN;
+
+  if (!token) {
+    throw new Error('API_TOKEN is required for Authorization header');
+  }
+
   const payload = JSON.stringify({
-    username: 'user@example.com',
-    password: 'secret',
+    username,
+    password,
   });
   
   const params = {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${__ENV.API_TOKEN}`,
+      'Authorization': `Bearer ${token}`,
     },
     timeout: '30s',
   };
   
-  http.post('https://api.example.com/login', payload, params);
+  http.post(`${BASE_URL}/login`, payload, params);
 }
 ```
 
@@ -64,11 +78,13 @@ export default function () {
 import grpc from 'k6/net/grpc';
 import { check } from 'k6';
 
+const GRPC_ADDR = __ENV.GRPC_ADDR || 'grpcbin.test.k6.io:9001';
+
 const client = new grpc.Client();
 client.load(['definitions'], 'service.proto');
 
 export default function () {
-  client.connect('grpc.example.com:50051', {
+  client.connect(GRPC_ADDR, {
     plaintext: false,
   });
   
@@ -98,15 +114,20 @@ const response = client.invoke('service.Method', request, { metadata });
 ```javascript
 import { browser } from 'k6/browser';
 
+const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+
 export default async function () {
   const page = await browser.newPage();
   
   try {
-    await page.goto('https://example.com');
+    await page.goto(BASE_URL);
     await page.waitForSelector('[data-testid="login-button"]');
+
+    const username = __ENV.UI_USER || 'test-user';
+    const password = __ENV.UI_PASSWORD || 'test-password';
     
-    await page.fill('[data-testid="username"]', 'user@example.com');
-    await page.fill('[data-testid="password"]', 'secret');
+    await page.fill('[data-testid="username"]', username);
+    await page.fill('[data-testid="password"]', password);
     await page.click('[data-testid="login-button"]');
     
     await page.waitForSelector('[data-testid="dashboard"]');
@@ -120,10 +141,12 @@ export default async function () {
 ```javascript
 import { browser } from 'k6/browser';
 
+const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+
 export default async function () {
   const page = await browser.newPage();
   
-  await page.goto('https://example.com');
+  await page.goto(BASE_URL);
   
   const fcp = await page.evaluate(() => {
     const [entry] = performance.getEntriesByName('first-contentful-paint');

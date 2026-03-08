@@ -35,7 +35,7 @@ Each finding includes:
 
 ## Scripted Validation Procedures
 
-See [../../../docs/testing/TESTING.md](../../../docs/testing/TESTING.md) for:
-- Unit test patterns for k6-validate skill itself
-- Manual test case library for common scenarios
-- Troubleshooting guide for validation edge cases
+See [testing-guide.md](testing-guide.md) for:
+- Unit-level validation patterns for `k6-validate`
+- Manual regression test cases for common scenarios
+- Troubleshooting guidance for validation edge cases
