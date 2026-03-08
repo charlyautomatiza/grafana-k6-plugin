@@ -1,11 +1,11 @@
 {
   "name": "grafana-k6",
-  "version": "1.0.0",
-  "description": "Multi-agent k6 performance testing skill with deterministic script generation and interactive ambiguity resolution for HTTP, gRPC, and browser testing",
+  "version": "0.1.0",
+  "description": "Claude Skills for k6 performance testing with interactive planning, executor selection, script validation, and multi-environment configuration",
   "author": {
     "name": "charlyautomatiza",
     "url": "https://github.com/charlyautomatiza/grafana-k6-skill"
   },
   "repository": "charlyautomatiza/grafana-k6-skill",
-  "skills": "./skills/"
+  "license": "MIT"
 }
