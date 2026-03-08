@@ -1,7 +1,7 @@
 ---
 name: k6-executor
 description: Select the correct k6 executor from user goals and constraints. Use when users ask which executor to use, how to model load, or how to convert a test objective into a valid scenario setup.
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 license: MIT
 metadata:
