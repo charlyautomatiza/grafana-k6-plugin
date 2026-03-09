@@ -160,6 +160,32 @@ Ask user three clarifying questions if `goal` parameter is incomplete:
 ```
 </executors>
 
+## Complete Configuration Example
+
+The executor configurations shown above are **executor-only snippets**. A valid k6 options object must also include thresholds (per Required Invariants):
+
+```javascript
+export const options = {
+  scenarios: {
+    my_scenario: {
+      executor: 'ramping-vus',
+      stages: [
+        { duration: '2m', target: 50 },
+        { duration: '5m', target: 100 },
+        { duration: '2m', target: 0 },
+      ],
+    },
+  },
+  thresholds: {
+    http_req_duration: ['p(95)<500'],
+    http_req_failed: ['rate<0.01'],
+    checks: ['rate>0.95'],
+  },
+};
+```
+
+**Important:** Never provide executor configuration without corresponding threshold guidance. If user does not specify SLAs, include default thresholds explicitly.
+
 ## Progressive Disclosure
 
 Keep this file focused on decision workflow. Place deep guidance in:

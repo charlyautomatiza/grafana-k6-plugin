@@ -76,10 +76,29 @@ Always enforce these validations before returning the plan:
 ## SLA Parsing Rules
 
 <sla-rules>
-Parse SLA string to extract:
+Parse SLA string to extract threshold conditions. Supported syntax:
+
+### Simple Conditions (single metric)
 - `p95<Xms` → 95th percentile latency threshold
 - `p99<Xms` → 99th percentile latency threshold
 - `error<X%` or `rate<X%` → Error rate threshold
+
+### Comma-Separated Lists (implicit AND)
+- `p95<500ms,p99<900ms,error<1%` → All conditions must be met
+- Commas separate independent thresholds
+- All listed thresholds are combined in final configuration
+
+### Explicit AND Conditions (multiple conditions on same metric)
+- `p95<500ms AND p95>100ms` → p95 must be between 100ms and 500ms
+- Multiple constraints on the same metric (range validation)
+- Translates to multiple threshold entries for the same k6 metric
+
+**Note:** OR logic is not supported in this version. All conditions are treated as mandatory (AND).
+
+### Parsing Examples
+- Input: `p95<400ms,error<1%` → p95 AND error rate thresholds
+- Input: `p95<500ms AND p99<900ms` → Both percentiles required
+- Input: `p95<2s` → Single threshold with p99 inferred (see sla-defaults.md)
 
 Defaults per profile when SLA is not provided:
 - `minimal`: p95<800ms, error<2%

@@ -24,9 +24,9 @@
 | Scenario | Rule | Severity | Fix |
 |----------|------|----------|-----|
 | No thresholds defined | ERROR | MUST have at least one threshold | Add threshold (e.g., `p95<500`) |
-| Only success checks, no metrics | WARNING | Thresholds are MOS, not just checks | Add latency/availability thresholds |
+| Only success checks, no metrics | WARNING | Thresholds define success criteria (MOS - Measure of Success), not just checks | Add latency/availability thresholds |
 | Inconsistent across environments | WARNING | Same test, different thresholds per env | Document environment-specific SLAs |
-| p95 > p99 | ERROR | Mathematical impossibility | Swap values or fix percentile order |
+| p95 > p99 | ERROR | Invalid percentile relationship (p95 must be ≤ p99) | Swap values or fix percentile order |
 | Error threshold > 5% | WARNING | Too lenient for most SLAs | Tighten error rate threshold |
 
 ### Load Profile
@@ -83,7 +83,9 @@ export const options = {
   vus: 10,
   duration: '1m',
 };
+```
 
+```javascript
 // ✅ FIXED
 export const options = {
   vus: 10,
@@ -97,11 +99,14 @@ export const options = {
 ```
 
 ### Example 2: Race condition in browser test
-```javascript
-// ❌ WARNING: No wait before fill
-await page.fill('[data-testid="username"]', 'user');
 
-// ✅ FIXED
+**❌ WARNING: No wait before fill**
+```javascript
+await page.fill('[data-testid="username"]', 'user');
+```
+
+**✅ FIXED**
+```javascript
 await page.waitForSelector('[data-testid="username"]');
 await page.fill('[data-testid="username"]', 'user');
 ```
@@ -110,7 +115,9 @@ await page.fill('[data-testid="username"]', 'user');
 ```javascript
 // ❌ ERROR: Security risk
 const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+```
 
+```javascript
 // ✅ FIXED
 const token = __ENV.API_TOKEN;
 if (!token) {
@@ -128,7 +135,9 @@ export const options = {
     { duration: '1m', target: 0 },
   ],
 };
+```
 
+```javascript
 // ✅ FIXED
 export const options = {
   scenarios: {

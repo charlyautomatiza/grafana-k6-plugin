@@ -46,12 +46,12 @@ import http from 'k6/http';
 const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
 
 export default function () {
-  const username = __ENV.API_USER || 'test-user';
-  const password = __ENV.API_PASSWORD || 'test-password';
+  const username = __ENV.API_USER;
+  const password = __ENV.API_PASSWORD;
   const token = __ENV.API_TOKEN;
 
-  if (!token) {
-    throw new Error('API_TOKEN is required for Authorization header');
+  if (!username || !password || !token) {
+    throw new Error('API_USER, API_PASSWORD, and API_TOKEN environment variables are required');
   }
 
   const payload = JSON.stringify({
@@ -114,25 +114,34 @@ const response = client.invoke('service.Method', request, { metadata });
 ```javascript
 import { browser } from 'k6/browser';
 
-const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+const BASE_URL = __ENV.BASE_URL || 'https://quickpizza.grafana.com/login';
 
 export default async function () {
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   
   try {
     await page.goto(BASE_URL);
-    await page.waitForSelector('[data-testid="login-button"]');
 
-    const username = __ENV.UI_USER || 'test-user';
-    const password = __ENV.UI_PASSWORD || 'test-password';
+    const username = __ENV.UI_USER;
+    const password = __ENV.UI_PASSWORD;
+
+    if (!username || !password) {
+      throw new Error('UI_USER and UI_PASSWORD environment variables are required');
+    }
     
-    await page.fill('[data-testid="username"]', username);
-    await page.fill('[data-testid="password"]', password);
-    await page.click('[data-testid="login-button"]');
+    await page.waitForSelector('input[name="login"]');
+    await page.fill('input[name="login"]', username);
     
-    await page.waitForSelector('[data-testid="dashboard"]');
+    await page.waitForSelector('input[name="password"]');
+    await page.fill('input[name="password"]', password);
+    
+    await page.click('button[type="submit"]');
+    
+    await page.waitForSelector('[data-testid="dashboard"]', { timeout: 5000 });
   } finally {
     await page.close();
+    await context.close();
   }
 }
 ```
@@ -141,20 +150,24 @@ export default async function () {
 ```javascript
 import { browser } from 'k6/browser';
 
-const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+const BASE_URL = __ENV.BASE_URL || 'https://quickpizza.grafana.com';
 
 export default async function () {
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   
-  await page.goto(BASE_URL);
-  
-  const fcp = await page.evaluate(() => {
-    const [entry] = performance.getEntriesByName('first-contentful-paint');
-    return entry ? entry.startTime : null;
-  });
-  
-  console.log(`First Contentful Paint: ${fcp}ms`);
-  
-  await page.close();
+  try {
+    await page.goto(BASE_URL);
+    
+    const fcp = await page.evaluate(() => {
+      const [entry] = performance.getEntriesByName('first-contentful-paint');
+      return entry ? entry.startTime : null;
+    });
+    
+    console.log(`First Contentful Paint: ${fcp}ms`);
+  } finally {
+    await page.close();
+    await context.close();
+  }
 }
 ```

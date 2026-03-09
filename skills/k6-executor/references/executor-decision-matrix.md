@@ -60,6 +60,15 @@
 - **Pros:** Controlled rate progression, auto-scales VUs
 - **Cons:** Requires rate planning
 - **Min. config:** `stages` array with rate and timeUnit
+- **VU dimensioning formula:**
+  ```
+  required_vus = rate * expected_iteration_duration_seconds
+  maxVUs = required_vus * 1.5  (recommended buffer for safety)
+  ```
+  - **Example:** If your target rate is 100 req/s and each iteration takes ~2s, then:
+    - `required_vus = 100 * 2 = 200 VUs`
+    - `maxVUs = 200 * 1.5 = 300 VUs` (30% safety buffer)
+  - **Without buffer:** Underdimensioned VUs can cause queue buildup and misleading test results
 - **Example:**
   ```javascript
   stages: [
@@ -126,9 +135,25 @@
 ## Capacity Guardrails
 
 ### For arrival-rate executors:
-- `preAllocatedVUs`: Start with 10–20% of expected peak load (requests/sec)
-- `maxVUs`: Cap at 2–3x preAllocatedVUs to prevent runaway scaling
-- **Rule:** `1 VU can handle ~100–500 req/s` (depends on response time)
+
+**Dimensioning Formula:**
+```
+required_vus = rate × expected_iteration_duration_seconds
+```
+
+**Example:** If you want 100 req/s and each request takes ~0.5s on average:
+```
+required_vus = 100 × 0.5 = 50 VUs
+```
+
+**Configuration Guidelines:**
+- `preAllocatedVUs`: Set to `required_vus` (calculated above)
+- `maxVUs`: Set to `2-3x required_vus` as a safety buffer for response time degradation
+- If response time increases during the test, k6 will scale up VUs automatically (up to `maxVUs`)
+
+**Warning:** If k6 continuously hits `maxVUs` limit, either:
+1. Your system is degrading (response times increasing)
+2. Your `maxVUs` is undersized for the target rate
 
 ### For VU-based executors:
 - Typical peak: 100–500 VUs per load generator instance

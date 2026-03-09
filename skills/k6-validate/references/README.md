@@ -7,6 +7,7 @@ Detailed validation criteria, severity models, and remediation playbooks for k6 
 - **[severity-and-antipatterns.md](severity-and-antipatterns.md)** — Error/warning/info classification and anti-pattern catalog
 - **[threshold-validation-rules.md](threshold-validation-rules.md)** — Threshold range checks and consistency rules
 - **[load-profile-validation-rules.md](load-profile-validation-rules.md)** — VU/duration/stages validation patterns
+- **[goja-k6-compatibility-matrix.md](goja-k6-compatibility-matrix.md)** — JavaScript runtime compatibility, allowed/prohibited modules
 
 ## Core Topics
 
