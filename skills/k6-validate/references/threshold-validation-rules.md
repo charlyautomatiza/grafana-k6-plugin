@@ -29,7 +29,7 @@
 - **Metric:** `checks`
 - **Typical ranges:**
   - Aggressive SLA: > 99% (0.99)
-  - Standard SLA: > 95% (0.95)
+  - Standard SLA: > 97% (0.97)
   - Minimum acceptable: > 95% (0.95)
 - **Validation rule:** Should correlate with error rate (inverse relationship)
 

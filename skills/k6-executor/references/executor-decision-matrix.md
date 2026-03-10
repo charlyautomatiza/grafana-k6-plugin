@@ -71,11 +71,11 @@
 - **VU dimensioning formula:**
   ```
   required_vus = rate * expected_iteration_duration_seconds
-  maxVUs = required_vus * 1.5  (recommended 50% safety buffer)
+  maxVUs = required_vus * safety_buffer  (recommended 1.5x-2x)
   ```
   - **Example:** If your target rate is 100 req/s and each iteration takes ~0.5s, then:
     - `required_vus = 100 * 0.5 = 50 VUs`
-    - `maxVUs = 50 * 1.5 = 75 VUs` (50% safety buffer)
+    - `maxVUs = 50 * 1.5 = 75 VUs` (minimum recommended buffer)
   - **Without buffer:** Underdimensioned VUs can cause queue buildup and misleading test results
 - **Example:**
   ```javascript
