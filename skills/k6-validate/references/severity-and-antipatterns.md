@@ -24,9 +24,9 @@
 | Scenario | Rule | Severity | Fix |
 |----------|------|----------|-----|
 | No thresholds defined | ERROR | MUST have at least one threshold | Add threshold (e.g., `p95<500`) |
-| Only success checks, no metrics | WARNING | Thresholds are MOS, not just checks | Add latency/availability thresholds |
+| Only success checks, no metrics | WARNING | Thresholds define success criteria (MOS - Measure of Success), not just checks | Add latency/availability thresholds |
 | Inconsistent across environments | WARNING | Same test, different thresholds per env | Document environment-specific SLAs |
-| p95 > p99 | ERROR | Mathematical impossibility | Swap values or fix percentile order |
+| p95 > p99 | ERROR | Invalid percentile relationship (p95 must be ≤ p99) | Swap values or fix percentile order |
 | Error threshold > 5% | WARNING | Too lenient for most SLAs | Tighten error rate threshold |
 
 ### Load Profile
@@ -47,7 +47,7 @@
 | All GET requests only | INFO | Limited coverage for stateful APIs | Add POST/PUT/DELETE if applicable |
 | No authentication headers | WARNING | May not test realistic auth flow | Add bearer tokens or API keys |
 | Batch size > 10 | WARNING | Batch requests might mask individual failures | Reduce batch size or use separate calls |
-| No timeout defined | WARNING | Requests might hang indefinitely | Set `timeout: '30s'` or similar |
+| No timeout defined | WARNING | No per-request timeout is defined; behavior falls back to k6 defaults that may not match SLA expectations | Set `timeout: '30s'` or similar |
 
 #### gRPC
 | Scenario | Rule | Severity | Fix |
@@ -69,7 +69,7 @@
 |---|---|---|---|
 | Hardcoded credentials in script | ERROR | Security risk, fails in CI/CD | Use `__ENV` variables |
 | Random think times with no control | WARNING | Unpredictable test duration | Use fixed `sleep()` or scenario-driven think times |
-| Shared data without `SharedArray` | WARNING | Race condition in concurrent VUs | Wrap data in `SharedArray` |
+| Shared data without `SharedArray` | WARNING | Higher memory usage and per-VU data reprocessing due to lack of efficient shared init data | Wrap data in `SharedArray` |
 | No tags on requests | INFO | Harder to analyze results | Add `tags: { name: 'request-name' }` |
 | Check without named result | WARNING | Unclear what passed/failed | Always include descriptive check names |
 | Threshold on aggregated metric only | WARNING | Cannot identify which scenario failed | Use per-scenario thresholds when needed |
@@ -83,7 +83,9 @@ export const options = {
   vus: 10,
   duration: '1m',
 };
+```
 
+```javascript
 // ✅ FIXED
 export const options = {
   vus: 10,
@@ -97,11 +99,14 @@ export const options = {
 ```
 
 ### Example 2: Race condition in browser test
-```javascript
-// ❌ WARNING: No wait before fill
-await page.fill('[data-testid="username"]', 'user');
 
-// ✅ FIXED
+**❌ WARNING: No wait before fill**
+```javascript
+await page.fill('[data-testid="username"]', 'user');
+```
+
+**✅ FIXED**
+```javascript
 await page.waitForSelector('[data-testid="username"]');
 await page.fill('[data-testid="username"]', 'user');
 ```
@@ -110,7 +115,9 @@ await page.fill('[data-testid="username"]', 'user');
 ```javascript
 // ❌ ERROR: Security risk
 const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+```
 
+```javascript
 // ✅ FIXED
 const token = __ENV.API_TOKEN;
 if (!token) {
@@ -128,7 +135,9 @@ export const options = {
     { duration: '1m', target: 0 },
   ],
 };
+```
 
+```javascript
 // ✅ FIXED
 export const options = {
   scenarios: {
