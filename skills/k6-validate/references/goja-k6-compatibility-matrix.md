@@ -22,7 +22,7 @@ These are the only module imports natively supported in k6:
 ### Protocol-Specific Modules
 | Module | Purpose | Stability |
 |--------|---------|-----------|
-| `k6/net/grpc` | gRPC client (stable since v0.43+) | ✅ Stable |
+| `k6/grpc` | gRPC client (replacement for removed `k6/net/grpc`) | ✅ Stable |
 | `k6/browser` | Browser automation (Chromium-based) | ✅ Stable |
 
 ### Utility Modules
@@ -37,8 +37,16 @@ These k6 modules have been removed and should not be used:
 
 | Module | Status | Alternative |
 |--------|--------|-------------|
-| `k6/html` | ❌ Removed | Use `k6/browser` for browser testing, or parse JSON responses directly for API testing |
-| `k6/experimental/grpc` | ❌ Deprecated | Use `k6/net/grpc` (stable since v0.43+) |
+| `k6/net/grpc` | ❌ Removed (deprecated in v0.49.0, removed in v0.51.0) | Use `k6/grpc` |
+| `k6/html` | ❌ Removed (deprecated in v0.47.0, removed in v0.52.0) | No direct replacement; use `k6/browser` where applicable or external preprocessing/parsing |
+
+## Deprecated k6 Modules (Avoid in New Scripts)
+
+These modules may still work but are deprecated and should be replaced:
+
+| Module | Status | Alternative |
+|--------|--------|-------------|
+| `k6/experimental/grpc` | ⚠️ Deprecated (legacy path) | Use `k6/grpc` |
 
 ## Node.js Modules (Prohibited)
 
@@ -101,7 +109,7 @@ k6's Goja runtime supports:
 - `for...of` loops
 
 ### ⚠️ Limited or Unstable
-- `async`/`await` (available but not recommended for high concurrency)
+- `async`/`await` (available; use cautiously in non-browser hot paths due to overhead)
 - `class` syntax (works but not idiomatic in k6)
 - Modules (`import`/`export` work, `require()` does not)
 
@@ -119,6 +127,10 @@ k6's Goja runtime supports:
 ### ❌ `Cannot find module 'k6/html'`
 **Cause:** Using removed k6 module (`k6/html`)  
 **Fix:** Use `k6/browser` for browser testing or parse HTTP response bodies directly
+
+### ❌ `Cannot find module 'k6/net/grpc'`
+**Cause:** Using removed k6 module path (`k6/net/grpc`)  
+**Fix:** Use `k6/grpc`
 
 ### ❌ `ReferenceError: require is not defined`
 **Cause:** Using CommonJS `require()` instead of ES6 `import`  
@@ -141,7 +153,8 @@ When validating k6 scripts:
 3. **Flag deprecated/removed k6 modules** (e.g., `k6/html`) → **ERROR**
 4. **Flag npm packages** (unless proven k6-compatible) → **WARNING**
 5. **Recommend jslib** for common utilities → **INFO**
-6. **Flag `async`/`await` in hot path** (iteration code) → **WARNING** (performance concern)
+6. **Flag `async`/`await` in hot path** (non-browser iteration code) → **WARNING** (performance concern)
+7. **Do not flag `async`/`await` when `k6/browser` is imported** → **INFO** (browser scripts require async default function)
 
 ## References
 

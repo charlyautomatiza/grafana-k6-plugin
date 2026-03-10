@@ -6,7 +6,7 @@
 |---------|-------------|-------------|------------|---------------|
 | minimal | <800ms | <1440ms | <2% | >95% |
 | standard | <500ms | <900ms | <1% | >95% |
-| aggressive | <700ms | <1260ms | <2% | >90% |
+| aggressive | <300ms | <700ms | <0.5% | >99% |
 
 ## Parsing Examples
 
@@ -45,8 +45,8 @@ Output:
 ```javascript
 {
   http_req_duration: ['p(95)<300', 'p(95)>50'],  // Multiple conditions on same metric
-  http_req_failed: ['rate<0.01'],
-  checks: ['rate>0.95']
+  http_req_failed: ['rate<0.01'],               // defaults added from profile
+  checks: ['rate>0.95']                         // defaults added from profile
 }
 ```
 
@@ -67,7 +67,7 @@ Output:
 - `http_req_duration` - Total request time
 - `http_req_waiting` - Time to first byte
 - `http_req_connecting` - TCP connection time
-- `http_req_failed` - Failed requests (4xx, 5xx)
+- `http_req_failed` - Requests marked as failed by k6 according to expected status criteria (by default, responses outside 2xx/3xx) and network/transport errors
 
 ### gRPC
 - `grpc_req_duration` - Total RPC time

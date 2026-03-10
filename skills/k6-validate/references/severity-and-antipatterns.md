@@ -47,7 +47,7 @@
 | All GET requests only | INFO | Limited coverage for stateful APIs | Add POST/PUT/DELETE if applicable |
 | No authentication headers | WARNING | May not test realistic auth flow | Add bearer tokens or API keys |
 | Batch size > 10 | WARNING | Batch requests might mask individual failures | Reduce batch size or use separate calls |
-| No timeout defined | WARNING | Requests might hang indefinitely | Set `timeout: '30s'` or similar |
+| No timeout defined | WARNING | No per-request timeout is defined; behavior falls back to k6 defaults that may not match SLA expectations | Set `timeout: '30s'` or similar |
 
 #### gRPC
 | Scenario | Rule | Severity | Fix |
@@ -69,7 +69,7 @@
 |---|---|---|---|
 | Hardcoded credentials in script | ERROR | Security risk, fails in CI/CD | Use `__ENV` variables |
 | Random think times with no control | WARNING | Unpredictable test duration | Use fixed `sleep()` or scenario-driven think times |
-| Shared data without `SharedArray` | WARNING | Race condition in concurrent VUs | Wrap data in `SharedArray` |
+| Shared data without `SharedArray` | WARNING | Higher memory usage and per-VU data reprocessing due to lack of efficient shared init data | Wrap data in `SharedArray` |
 | No tags on requests | INFO | Harder to analyze results | Add `tags: { name: 'request-name' }` |
 | Check without named result | WARNING | Unclear what passed/failed | Always include descriptive check names |
 | Threshold on aggregated metric only | WARNING | Cannot identify which scenario failed | Use per-scenario thresholds when needed |

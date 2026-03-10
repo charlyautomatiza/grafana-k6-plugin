@@ -5,7 +5,7 @@
 ### Response Time (Latency)
 - **Metric:** `http_req_duration`, `grpc_req_duration`, `browser_web_vital_*`
 - **Typical ranges:**
-  - Aggressive SLA: p95 < 200ms
+  - Aggressive SLA: p95 < 300ms
   - Standard SLA: p95 < 500ms
   - Lenient SLA: p95 < 1000ms
 - **Validation rule:** p95 should be ≤ p99 and ≥ p50
@@ -20,7 +20,7 @@
 ### Error Rates
 - **Metric:** `http_req_failed`, `grpc_req_failed`, check failures
 - **Typical ranges:**
-  - Aggressive SLA: error rate < 0.1% (0.001)
+  - Aggressive SLA: error rate < 0.5% (0.005)
   - Standard SLA: error rate < 1% (0.01)
   - Acceptable SLA: error rate < 5% (0.05)
 - **Validation rule:** Error threshold should never be > 10% for load tests
@@ -28,8 +28,8 @@
 ### Success Rate / Check Pass Rate
 - **Metric:** `checks`
 - **Typical ranges:**
-  - Aggressive SLA: > 99.5% (0.995)
-  - Standard SLA: > 99% (0.99)
+  - Aggressive SLA: > 99% (0.99)
+  - Standard SLA: > 95% (0.95)
   - Minimum acceptable: > 95% (0.95)
 - **Validation rule:** Should correlate with error rate (inverse relationship)
 

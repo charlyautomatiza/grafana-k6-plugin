@@ -103,7 +103,7 @@ Parse SLA string to extract threshold conditions. Supported syntax:
 Defaults per profile when SLA is not provided:
 - `minimal`: p95<800ms, error<2%
 - `standard`: p95<500ms, error<1%
-- `aggressive`: p95<700ms, error<2%
+- `aggressive`: p95<300ms, p99<700ms, error<0.5%, checks>99%
 </sla-rules>
 
 ## Protocol-Specific Generation

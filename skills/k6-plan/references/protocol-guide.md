@@ -44,25 +44,24 @@ export default function () {
 import http from 'k6/http';
 
 const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+const API_USER = __ENV.API_USER;
+const API_PASSWORD = __ENV.API_PASSWORD;
+const API_TOKEN = __ENV.API_TOKEN;
+
+if (!API_USER || !API_PASSWORD || !API_TOKEN) {
+  throw new Error('API_USER, API_PASSWORD, and API_TOKEN environment variables are required');
+}
 
 export default function () {
-  const username = __ENV.API_USER;
-  const password = __ENV.API_PASSWORD;
-  const token = __ENV.API_TOKEN;
-
-  if (!username || !password || !token) {
-    throw new Error('API_USER, API_PASSWORD, and API_TOKEN environment variables are required');
-  }
-
   const payload = JSON.stringify({
-    username,
-    password,
+    username: API_USER,
+    password: API_PASSWORD,
   });
   
   const params = {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${API_TOKEN}`,
     },
     timeout: '30s',
   };
@@ -75,7 +74,7 @@ export default function () {
 
 ### Basic Client Setup
 ```javascript
-import grpc from 'k6/net/grpc';
+import grpc from 'k6/grpc';
 import { check } from 'k6';
 
 const GRPC_ADDR = __ENV.GRPC_ADDR || 'grpcbin.test.k6.io:9001';
@@ -115,6 +114,12 @@ const response = client.invoke('service.Method', request, { metadata });
 import { browser } from 'k6/browser';
 
 const BASE_URL = __ENV.BASE_URL || 'https://quickpizza.grafana.com/login';
+const UI_USER = __ENV.UI_USER;
+const UI_PASSWORD = __ENV.UI_PASSWORD;
+
+if (!UI_USER || !UI_PASSWORD) {
+  throw new Error('UI_USER and UI_PASSWORD environment variables are required');
+}
 
 export default async function () {
   const context = await browser.newContext();
@@ -122,19 +127,12 @@ export default async function () {
   
   try {
     await page.goto(BASE_URL);
-
-    const username = __ENV.UI_USER;
-    const password = __ENV.UI_PASSWORD;
-
-    if (!username || !password) {
-      throw new Error('UI_USER and UI_PASSWORD environment variables are required');
-    }
     
     await page.waitForSelector('input[name="login"]');
-    await page.fill('input[name="login"]', username);
+    await page.fill('input[name="login"]', UI_USER);
     
     await page.waitForSelector('input[name="password"]');
-    await page.fill('input[name="password"]', password);
+    await page.fill('input[name="password"]', UI_PASSWORD);
     
     await page.click('button[type="submit"]');
     

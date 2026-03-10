@@ -46,13 +46,21 @@
 - **Pros:** Precise rate control, auto-scales VUs, results are rate-independent
 - **Cons:** More complex, requires rate target
 - **Min. config:** `rate`, `timeUnit`, `duration`, `preAllocatedVUs`, `maxVUs`
+- **VU dimensioning formula:**
+  ```
+  required_vus = rate * expected_iteration_duration_seconds
+  maxVUs = required_vus * safety_buffer  (recommended 1.5x-2x)
+  ```
+  - **Example:** If target rate is 100 req/s and each iteration takes ~0.5s:
+    - `required_vus = 100 * 0.5 = 50 VUs`
+    - `maxVUs = 50 * 1.5 = 75 VUs` (50% safety buffer)
 - **Example:**
   ```javascript
   rate: 100,          // 100 requests
   timeUnit: '1s',     // per second
   duration: '5m',
-  preAllocatedVUs: 10,
-  maxVUs: 50,
+  preAllocatedVUs: 50,
+  maxVUs: 75,
   ```
 
 ### ramping-arrival-rate
@@ -126,7 +134,7 @@
 
 ### ❌ Not setting maxVUs for arrival-rate executors
 **Issue:** VU pool can grow unbounded if response times degrade
-**Fix:** Always set `maxVUs` to a safe upper limit (e.g., 2x preAllocatedVUs)
+**Fix:** Always set `maxVUs` to a safe upper limit (typically `1.5x-2x required_vus`)
 
 ### ❌ Using high iteration count with small VU count
 **Issue:** Very long test duration, reduced parallelism
@@ -148,7 +156,7 @@ required_vus = 100 × 0.5 = 50 VUs
 
 **Configuration Guidelines:**
 - `preAllocatedVUs`: Set to `required_vus` (calculated above)
-- `maxVUs`: Set to `1.5x required_vus` as a safety buffer for response time degradation
+- `maxVUs`: Set to `1.5x-2x required_vus` as a safety buffer for response time degradation
 - If response time increases during the test, k6 will scale up VUs automatically (up to `maxVUs`)
 
 **Warning:** If k6 continuously hits `maxVUs` limit, either:
