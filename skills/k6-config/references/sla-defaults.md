@@ -16,7 +16,7 @@ When no explicit profile is specified, the following environment-to-profile mapp
 |-------------|----------------|-----------|
 | `dev`, `local` | minimal | Lower expectations for local development environments |
 | `staging`, `qa`, `test` | standard | Representative of production expectations |
-| `prod`, `production` | aggressive | Strictest requirements for production workloads |
+| `prod`, `production` | standard | Strictest default profile in this table for production workloads |
 
 This mapping ensures consistent profile selection across different deployment contexts. Users can override by explicitly specifying a profile (e.g., `--profile=standard`).
 

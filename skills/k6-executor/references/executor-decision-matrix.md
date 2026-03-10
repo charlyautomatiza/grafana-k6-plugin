@@ -63,11 +63,11 @@
 - **VU dimensioning formula:**
   ```
   required_vus = rate * expected_iteration_duration_seconds
-  maxVUs = required_vus * 1.5  (recommended buffer for safety)
+  maxVUs = required_vus * 1.5  (recommended 50% safety buffer)
   ```
-  - **Example:** If your target rate is 100 req/s and each iteration takes ~2s, then:
-    - `required_vus = 100 * 2 = 200 VUs`
-    - `maxVUs = 200 * 1.5 = 300 VUs` (30% safety buffer)
+  - **Example:** If your target rate is 100 req/s and each iteration takes ~0.5s, then:
+    - `required_vus = 100 * 0.5 = 50 VUs`
+    - `maxVUs = 50 * 1.5 = 75 VUs` (50% safety buffer)
   - **Without buffer:** Underdimensioned VUs can cause queue buildup and misleading test results
 - **Example:**
   ```javascript
@@ -77,8 +77,8 @@
     { duration: '1m', target: 0 },    // ramp down
   ],
   timeUnit: '1s',
-  preAllocatedVUs: 10,
-  maxVUs: 100,
+  preAllocatedVUs: 50,
+  maxVUs: 75,
   ```
 
 ### per-vu-iterations
@@ -148,7 +148,7 @@ required_vus = 100 × 0.5 = 50 VUs
 
 **Configuration Guidelines:**
 - `preAllocatedVUs`: Set to `required_vus` (calculated above)
-- `maxVUs`: Set to `2-3x required_vus` as a safety buffer for response time degradation
+- `maxVUs`: Set to `1.5x required_vus` as a safety buffer for response time degradation
 - If response time increases during the test, k6 will scale up VUs automatically (up to `maxVUs`)
 
 **Warning:** If k6 continuously hits `maxVUs` limit, either:

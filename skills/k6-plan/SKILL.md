@@ -122,7 +122,7 @@ Defaults per profile when SLA is not provided:
 - Handle metadata for authentication
 
 ### Browser
-- Use `browser.newPage()`, `page.goto()`, `page.waitForSelector()`
+- Use `browser.newContext()`, `context.newPage()`, `page.goto()`, `page.waitForSelector()`
 - Always close page/context at iteration end
 - Prefer `data-testid` selectors
 - Collect Web Vitals when relevant

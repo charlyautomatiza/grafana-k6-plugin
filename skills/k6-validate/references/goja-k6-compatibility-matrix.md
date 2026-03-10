@@ -18,12 +18,11 @@ These are the only module imports natively supported in k6:
 | `k6/data` | SharedArray for test data | ✅ Stable |
 | `k6/encoding` | Base64 encoding/decoding | ✅ Stable |
 | `k6/crypto` | Cryptographic functions (hashing, HMAC) | ✅ Stable |
-| `k6/html` | HTML parsing and selection | ✅ Stable |
 
 ### Protocol-Specific Modules
 | Module | Purpose | Stability |
 |--------|---------|-----------|
-| `k6/net/grpc` | gRPC client | ✅ Stable |
+| `k6/net/grpc` | gRPC client (stable since v0.43+) | ✅ Stable |
 | `k6/browser` | Browser automation (Chromium-based) | ✅ Stable |
 
 ### Utility Modules
@@ -31,6 +30,15 @@ These are the only module imports natively supported in k6:
 |--------|---------|-----------|
 | `k6/execution` | Test execution metadata (scenario, VU ID) | ✅ Stable |
 | `k6/timers` | setTimeout, setInterval (limited support) | ⚠️ Limited |
+
+## Removed k6 Modules (Do Not Use)
+
+These k6 modules have been removed and should not be used:
+
+| Module | Status | Alternative |
+|--------|--------|-------------|
+| `k6/html` | ❌ Removed | Use `k6/browser` for browser testing, or parse JSON responses directly for API testing |
+| `k6/experimental/grpc` | ❌ Deprecated | Use `k6/net/grpc` (stable since v0.43+) |
 
 ## Node.js Modules (Prohibited)
 
@@ -66,14 +74,15 @@ Most npm packages designed for Node.js will **not work** in k6 because:
 
 | Library | Purpose | Stability | When to Use |
 |---------|---------|-----------|-------------|
-| `k6/x/faker` | Generate fake data (names, emails, etc.) | ✅ Stable | Data-driven tests |
-| `k6/x/expect` | Assertions (similar to Jest) | ✅ Stable | Expressive checks |
-| `k6/utils` | Common utilities (random, parsing) | ✅ Stable | General scripting |
+| `k6-utils` | Common utilities (random, UUID, helpers) | ✅ Stable | General scripting |
+| `k6chaijs` | Chai-style assertions for checks | ✅ Stable | Expressive validation |
+| `papaparse` | CSV parsing utilities | ✅ Stable | Data-driven tests from CSV |
 
 ### Using jslib Libraries
 ```javascript
 import { randomItem, randomString } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
 import { describe, expect } from 'https://jslib.k6.io/k6chaijs/4.3.4.3/index.js';
+import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 ```
 
 ## ECMAScript Support
@@ -107,6 +116,10 @@ k6's Goja runtime supports:
 **Cause:** Trying to import Node.js module or npm package  
 **Fix:** Use k6 built-in modules or jslib alternatives
 
+### ❌ `Cannot find module 'k6/html'`
+**Cause:** Using removed k6 module (`k6/html`)  
+**Fix:** Use `k6/browser` for browser testing or parse HTTP response bodies directly
+
 ### ❌ `ReferenceError: require is not defined`
 **Cause:** Using CommonJS `require()` instead of ES6 `import`  
 **Fix:** Convert to `import { x } from 'module'`
@@ -125,9 +138,10 @@ When validating k6 scripts:
 
 1. **Flag ES6+ features beyond Goja support** (e.g., top-level `await`) → **ERROR**
 2. **Flag Node.js imports** (`fs`, `path`, etc.) → **ERROR**
-3. **Flag npm packages** (unless proven k6-compatible) → **WARNING**
-4. **Recommend jslib** for common utilities → **INFO**
-5. **Flag `async`/`await` in hot path** (iteration code) → **WARNING** (performance concern)
+3. **Flag deprecated/removed k6 modules** (e.g., `k6/html`) → **ERROR**
+4. **Flag npm packages** (unless proven k6-compatible) → **WARNING**
+5. **Recommend jslib** for common utilities → **INFO**
+6. **Flag `async`/`await` in hot path** (iteration code) → **WARNING** (performance concern)
 
 ## References
 
