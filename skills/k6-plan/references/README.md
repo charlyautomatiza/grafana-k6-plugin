@@ -16,6 +16,8 @@ Complete reference materials for comprehensive k6 performance test planning.
 - Profile defaults, stage construction, and duration estimation
 - Protocol-specific planning (HTTP, gRPC, browser VU requirements)
 - Data source selection and integration strategies
+- HTTP method confirmation and auth discovery for executable plans
+- Deterministic next-step selection from unresolved dependencies
 
 ## Implementation Rules
 
@@ -24,6 +26,35 @@ Complete reference materials for comprehensive k6 performance test planning.
 3. **Missing critical parameters trigger the question protocol** before plan generation
 4. **All assumptions must be listed** in output when defaults are applied
 5. **Each plan includes executor recommendation** with explicit rationale
+6. **Runnable URL hard-coding is forbidden** in executable output; require `__ENV.BASE_URL` style variables
+7. **Auth discovery is mandatory** before final script generation when auth requirements are uncertain
+
+## HTTP Planning Requirements
+
+Before finalizing an HTTP plan:
+
+1. Confirm target endpoint and primary method (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
+2. If method is missing, ask for method before producing executable output.
+3. Validate payload shape for write operations (`POST`/`PUT`/`PATCH`) and expected response status.
+4. Add method-specific check guidance (status, latency, and optional response schema checks).
+
+## Auth Discovery Requirements
+
+Before finalizing a plan or script:
+
+1. Determine auth mode: none, bearer token, API key, basic auth, session cookie, or mTLS.
+2. Declare required environment variables explicitly.
+3. Never place credentials inline in examples.
+
+## Deterministic Next Step Rule
+
+Every final plan must contain exactly one `Next recommended step` chosen by this order:
+
+1. Missing target or method
+2. Missing SLA
+3. Missing auth details
+4. Missing data source definition
+5. Generate script (`output=script`) and run dry validation
 
 ## Decision Criteria
 

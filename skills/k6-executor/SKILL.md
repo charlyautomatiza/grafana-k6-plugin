@@ -26,6 +26,12 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 Do not continue recommendation after fallback.
 
+## Language Policy
+
+1. If user language is explicit, answer in that language.
+2. If language is not explicit, default to English.
+3. Keep command names, k6 metric keys, and code identifiers in English.
+
 ## Required k6 Invariants
 
 Always enforce these validations before final recommendation:
@@ -160,6 +166,14 @@ Ask user three clarifying questions if `goal` parameter is incomplete:
 ```
 </executors>
 
+## Web Dashboard Recommendation Gate
+
+Apply this gate before final recommendation:
+
+1. If scenario involves browser UX troubleshooting or local interactive analysis, recommend `K6_WEB_DASHBOARD=true`.
+2. If scenario is CI/non-interactive, keep dashboard disabled by default and prefer exported summaries.
+3. State one deterministic dashboard recommendation: `enable` or `disable` with rationale.
+
 ## Complete Configuration Example
 
 The executor configurations shown above are **executor-only snippets**. A valid k6 options object must also include thresholds (per Required Invariants):
@@ -199,5 +213,6 @@ Keep this file focused on decision workflow. Place deep guidance in:
 3. If ambiguous, ask decision-tree questions.
 4. Map answers to the most appropriate executor.
 5. Validate threshold and load-profile invariants.
-6. Provide a deterministic configuration example.
-7. Explain rationale and next steps.
+6. Apply Web Dashboard Recommendation Gate.
+7. Provide a deterministic configuration example.
+8. Explain rationale and next steps.

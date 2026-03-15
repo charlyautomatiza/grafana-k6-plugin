@@ -26,6 +26,12 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 Do not continue generation after fallback.
 
+## Language Policy
+
+1. If user language is explicit, answer in that language.
+2. If language is not explicit, default to English.
+3. Keep command names, k6 metric keys, and code identifiers in English.
+
 ## Required k6 Invariants
 
 Always enforce these validations before returning configuration output:
@@ -51,6 +57,14 @@ Generate separate configs for dev/staging/prod with environment-specific:
 - Use environment variables for sensitive data
 - Provide .env.example templates
 - Never hard-code credentials
+- Commit only placeholder-based `.env.example` files
+- Do not recommend committing `.env.dev`, `.env.staging`, `.env.prod`, or any env file with live values
+- Treat generated reports as local artifacts, not committed source files
+
+### Web Dashboard Controls
+- Support explicit dashboard toggle in generated config guidance
+- Use `K6_WEB_DASHBOARD=true` only for local exploratory runs
+- Default to dashboard disabled for CI and headless execution
 </patterns>
 
 ## Progressive Disclosure
@@ -65,5 +79,6 @@ Keep this file focused on execution workflow. Place deep guidance in:
 2. Run Tool Discovery Protocol if critical input is missing.
 3. Validate or derive thresholds for each environment.
 4. Validate or derive `vus` and `duration` for each environment.
-5. Generate deterministic config output and `.env.example` guidance.
-6. Include a short summary of derived assumptions.
+5. Determine per-environment dashboard policy (`enable` only when explicitly requested for local analysis).
+6. Generate deterministic config output and `.env.example` guidance, explicitly warning that real env files and generated reports must remain uncommitted.
+7. Include a short summary of derived assumptions.

@@ -29,10 +29,16 @@ Do not continue plan generation after fallback.
 ## Core Rules
 
 <rules>
-1. **Three-Question Protocol**: When critical parameters are missing, ask exactly three questions:
+1. **Adaptive Question System**: When critical parameters are missing, start with the three baseline planning questions and continue in the same question flow with any additional required questions:
    - What is the target URL/endpoint? (if `target` missing)
    - What scenario type do you need? Options: load, stress, spike, soak, smoke (if `scenario` missing)
    - What are your SLA requirements? Example: p95<500ms,error<1% (if `sla` missing)
+
+   Additional questions must be integrated into the same question system, not handled as a separate side flow:
+   - Add an HTTP method question when `protocol=http` and the method cannot be inferred safely.
+   - Add one or more authentication questions when auth is required or unknown and executable output depends on it.
+   - Add more questions when other critical ambiguities or missing requirements are detected.
+   - Do not finalize the plan or script until all required questions from this same system are resolved.
 
 2. **Load Profile Defaults** (when `profile` is not specified):
    - `minimal`: 5 VUs, 1m duration, smoke testing
@@ -46,11 +52,35 @@ Do not continue plan generation after fallback.
    - SLA-derived thresholds
    - Protocol-specific recommendations
    - Data integration suggestions (CSV/JSON)
+   - Exactly one deterministic `Next recommended step`
 
 4. **Script Generation** (optional): Only generate k6 script code when user explicitly requests `output=script` or clearly asks for executable code.
 
 5. **Determinism**: Same inputs produce identical outputs every time.
 </rules>
+
+## Language Policy
+
+1. If user language is explicit, answer in that language.
+2. If language is not explicit, default to English.
+3. Keep command names, k6 metric keys, and code identifiers in English.
+
+## HTTP Method Question
+
+Before producing a final HTTP plan, add the method question to the same active question system:
+
+1. Confirm primary method (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) when endpoint behavior depends on method.
+2. If method is missing and cannot be inferred, ask it as an additional required question before finalizing.
+3. Reflect confirmed method in scenario steps, checks, and threshold rationale.
+
+## Auth Discovery Questions
+
+Before finalizing plan or script output, add auth questions to the same active question system:
+
+1. Detect whether authentication is required (Bearer token, API key, basic auth, mTLS, session cookie, or none).
+2. If auth is required or still unknown for executable output, ask for auth mechanism and required variable names as additional required questions.
+3. Never hard-code credentials in examples or generated scripts.
+4. Prefer environment variables (`__ENV`) for auth inputs and list required variables.
 
 ## Required k6 Invariants
 
@@ -62,6 +92,10 @@ Always enforce these validations before returning the plan:
 2. **Load profile is required**
    - Plan must include explicit VUs and duration (or explicit stage set with equivalent duration and target VUs).
    - If `vus`/`duration` are missing, derive from profile defaults and state assumptions.
+3. **Runnable URL hard-coding is forbidden**
+   - Do not generate runnable scripts with fixed live target URLs.
+   - Require `__ENV.BASE_URL` (or equivalent) for executable output.
+   - If target is missing, ask for it instead of using a default live URL.
 
 ## Scenario to Executor Mapping
 
@@ -140,11 +174,15 @@ When user invokes this skill:
 
 1. Parse provided parameters (`target`, `scenario`, `sla`, `profile`, `protocol`, `duration`, `vus`, `output`).
 2. Run Tool Discovery Protocol when critical inputs are missing.
-3. If `target`, `scenario`, or `sla` are missing, emit exactly three questions and wait for answers.
+3. Start the Adaptive Question System with the three baseline planning questions when `target`, `scenario`, or `sla` are missing.
 4. Apply load profile defaults based on `profile`.
-5. Select executor based on scenario type.
-6. Parse SLA thresholds or apply deterministic defaults.
-7. Validate explicit or derived VUs and duration.
-8. Generate textual plan with recommendations.
-9. If `output=script` or user explicitly requests code, generate complete k6 JavaScript.
-10. Return the plan and assumptions summary.
+5. Add an HTTP method question to the same question system when protocol is HTTP and the method is still ambiguous.
+6. Add auth questions to the same question system when auth is required, unknown, or otherwise blocks executable output.
+7. Add more questions in the same system if other critical ambiguities or missing requirements are detected.
+8. Select executor based on scenario type.
+9. Parse SLA thresholds or apply deterministic defaults.
+10. Validate explicit or derived VUs and duration.
+11. Generate textual plan with recommendations.
+12. Add exactly one deterministic `Next recommended step` based on first unresolved dependency.
+13. If `output=script` or user explicitly requests code, generate complete k6 JavaScript.
+14. Return the plan and assumptions summary.

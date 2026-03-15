@@ -23,6 +23,9 @@ Detailed guidance for multi-environment k6 configuration and implementation patt
 3. **Document assumptions** when applying derivation rules
 4. **Never hard-code credentials** in generated examples — use `__ENV` references
 5. **Include stage definitions** when constructing multi-stage configs for ramp-up/ramp-down patterns
+6. **Commit only `.env.example` templates** with placeholder values
+7. **Never recommend committing real environment files** such as `.env.dev`, `.env.staging`, or `.env.prod`
+8. **Treat reports as generated artifacts** and keep them outside committed source guidance
 
 ## Example Workflow
 

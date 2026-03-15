@@ -19,6 +19,9 @@ This skill enables Claude to plan, generate, and validate k6 performance testing
 - **🔍 Validation**: Built-in script validation and quality checks
 - **📝 Self-Contained Skills**: All logic embedded in SKILL.md files
 - **🏗️ Standards Compliant**: Follows official Claude Skills specification
+- **🔐 Auth-Aware Planning**: Discovery gate for auth mechanism before executable output
+- **🧭 Method-Aware HTTP Planning**: Explicit HTTP method confirmation when required
+- **🖥️ Dashboard Guidance**: Deterministic recommendation to enable/disable k6 web dashboard
 
 ## ⚠️ v0.1.0 Initial Release
 
@@ -66,6 +69,42 @@ In Claude, try:
 
 You should get a complete, actionable test plan with recommendations.
 
+## 🌐 Global Language Policy
+
+- If the user's language is explicit, respond in that language.
+- If language is not explicit, default to English.
+- Keep command names, k6 metric keys, and code identifiers in English.
+
+## 🧱 Standard k6 Workspace Layout
+
+Recommended directory structure for generated test assets:
+
+```text
+k6-project/
+├── src/
+│   ├── scripts/
+│   │   ├── smoke.js
+│   │   ├── load.js
+│   │   └── stress.js
+│   ├── data/
+│   │   ├── users.csv
+│   │   └── payloads.json
+│   ├── config/
+│   │   ├── thresholds.js
+│   │   └── scenarios.js
+│   ├── env/
+│   │   └── .env.example
+│   └── reports/
+└── .gitignore
+```
+
+Layout rules:
+- Keep generated source assets under `src/`.
+- Commit `src/env/.env.example` with placeholders only.
+- Do not commit runtime env files such as `.env`, `.env.dev`, `.env.staging`, or `.env.prod`.
+- Do not commit generated artifacts in `src/reports/`.
+- Never store credentials, production tokens, or sensitive internal endpoints in committed fixtures or env templates.
+
 ## 📖 Skills Reference
 
 This skill provides four self-contained skills:
@@ -73,6 +112,16 @@ This skill provides four self-contained skills:
 ### `/k6-plan` - Interactive Test Planning
 
 Create comprehensive k6 performance test plans from requirements. Generates textual plans by default, or complete scripts when explicitly requested.
+
+Deterministic planning gates:
+- HTTP method confirmation for endpoint-sensitive flows
+- Auth discovery (none, bearer, API key, basic, mTLS, session)
+- Exactly one `Next recommended step` in final output
+
+Project layout guidance:
+- Generated project examples should place runnable assets under `src/`
+- Env templates may use `src/env/.env.example`
+- Generated reports under `src/reports/` are local artifacts and should not be committed
 
 **Parameters**:
 - `scenario` (required): Test type - `load`, `stress`, `spike`, `soak`, `smoke`
@@ -90,13 +139,13 @@ Create comprehensive k6 performance test plans from requirements. Generates text
 /k6-plan scenario=load target=https://api.example.com sla=p95<300ms
 
 # Aggressive stress test
-/k6-plan scenario=stress target=https://test.com sla=p99<1s profile=aggressive
+/k6-plan scenario=stress target=https://api.example.com sla=p99<1s profile=aggressive
 
 # Browser automation plan
 /k6-plan protocol=browser target=https://shop.example.com scenario=load sla=p95<2s
 
 # gRPC service test
-/k6-plan protocol=grpc target=grpcbin.test.k6.io:9000 scenario=load sla=p95<200ms
+/k6-plan protocol=grpc target=grpc.example.internal:9000 scenario=load sla=p95<200ms
 
 # Generate executable script
 /k6-plan scenario=load target=https://api.example.com sla=p95<300ms output=script
@@ -140,6 +189,15 @@ Validate k6 scripts for best practices, common issues, and performance anti-patt
 ### `/k6-config` - Multi-Environment Configuration
 
 Generate environment-specific k6 configurations with best practices for secrets management.
+
+Dashboard policy:
+- Local exploratory runs: can recommend `K6_WEB_DASHBOARD=true`
+- CI/headless runs: dashboard disabled by default
+
+Secrets policy:
+- Commit only `.env.example` templates with placeholders
+- Do not commit `.env.dev`, `.env.staging`, `.env.prod`, or any env file containing live values
+- Treat `src/reports/` as generated output, not source code
 
 **Parameters**:
 - `environments` (required): Comma-separated list of environments (e.g., `dev,staging,prod`)

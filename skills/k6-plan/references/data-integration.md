@@ -52,17 +52,46 @@ export default function () {
 
 ### Implementation
 ```javascript
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+import http from 'k6/http';
+
+const BASE_URL = __ENV.BASE_URL;
 const API_TOKEN = __ENV.API_TOKEN;
 
-if (!API_TOKEN) {
-  throw new Error('API_TOKEN environment variable is required');
+if (!BASE_URL || !API_TOKEN) {
+  throw new Error('BASE_URL and API_TOKEN environment variables are required');
 }
 
 export default function () {
   const response = http.get(`${BASE_URL}/api/data`, {
     headers: { 'Authorization': `Bearer ${API_TOKEN}` },
+    timeout: '30s',
+    tags: { name: 'api-data' },
   });
+}
+```
+
+## Auth Discovery and Data Contracts
+
+Before generating executable scripts with request data:
+
+1. Confirm whether auth fields are present in the selected dataset.
+2. Validate required keys for the selected method (for example, ID for `GET`, payload fields for `POST`).
+3. Fail fast with clear errors when required fields are missing.
+4. Keep secrets in `__ENV`; never store them in CSV/JSON fixtures.
+5. If environment setup is documented, use a committed `.env.example` with placeholders only.
+6. Do not recommend committing real `.env` files or generated reports.
+
+## Safe Parsing Pattern
+
+Use guarded parsing for dynamic JSON payloads:
+
+```javascript
+function parseJsonOrFail(raw, sourceName) {
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`Invalid JSON in ${sourceName}: ${err.message}`);
+  }
 }
 ```
 
