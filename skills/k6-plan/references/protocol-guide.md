@@ -48,24 +48,33 @@ export default function () {
   const responses = http.batch([
     ['GET', `${BASE_URL}/users`],
     ['GET', `${BASE_URL}/products`],
-    ['POST', `${BASE_URL}/orders`, JSON.stringify({ item: 'test' })],
+    [
+      'POST',
+      `${BASE_URL}/orders`,
+      JSON.stringify({ item: 'test' }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: '30s',
+        tags: { name: 'create-order' },
+      },
+    ],
   ]);
   
   // Process responses[0], responses[1]
 }
 ```
 
-### POST with Auth
+### Login and Token Extraction
 ```javascript
 import http from 'k6/http';
+import { check } from 'k6';
 
 const BASE_URL = __ENV.BASE_URL;
 const API_USER = __ENV.API_USER;
 const API_PASSWORD = __ENV.API_PASSWORD;
-const API_TOKEN = __ENV.API_TOKEN;
 
-if (!BASE_URL || !API_USER || !API_PASSWORD || !API_TOKEN) {
-  throw new Error('BASE_URL, API_USER, API_PASSWORD, and API_TOKEN environment variables are required');
+if (!BASE_URL || !API_USER || !API_PASSWORD) {
+  throw new Error('BASE_URL, API_USER, and API_PASSWORD environment variables are required');
 }
 
 export default function () {
@@ -77,12 +86,48 @@ export default function () {
   const params = {
     headers: {
       'Content-Type': 'application/json',
+    },
+    timeout: '30s',
+    tags: { name: 'login' },
+  };
+
+  const loginRes = http.post(`${BASE_URL}/login`, payload, params);
+
+  check(loginRes, {
+    'login status is 200': (r) => r.status === 200,
+  });
+
+  const token = loginRes.json('token');
+  if (!token) {
+    throw new Error('Login response did not contain token');
+  }
+}
+```
+
+### Authenticated POST
+```javascript
+import http from 'k6/http';
+
+const BASE_URL = __ENV.BASE_URL;
+const API_TOKEN = __ENV.API_TOKEN;
+
+if (!BASE_URL || !API_TOKEN) {
+  throw new Error('BASE_URL and API_TOKEN environment variables are required');
+}
+
+export default function () {
+  const payload = JSON.stringify({ item: 'test' });
+
+  const params = {
+    headers: {
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${API_TOKEN}`,
     },
     timeout: '30s',
+    tags: { name: 'create-order' },
   };
-  
-  http.post(`${BASE_URL}/login`, payload, params);
+
+  http.post(`${BASE_URL}/orders`, payload, params);
 }
 ```
 

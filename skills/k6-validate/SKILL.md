@@ -54,7 +54,7 @@ Do not continue validation after fallback.
 
 4. **Anti-Patterns to Flag**:
    - Hard-coded credentials
-   - Missing environment variable fallbacks
+   - Insecure hard-coded environment defaults/fallbacks in runnable scripts
    - Unbounded loops
    - Synchronous waits without reason
    - Silent `catch` blocks that swallow errors

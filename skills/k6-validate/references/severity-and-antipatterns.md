@@ -73,9 +73,11 @@
 | No tags on requests | INFO | Harder to analyze results | Add `tags: { name: 'request-name' }` |
 | Check without named result | WARNING | Unclear what passed/failed | Always include descriptive check names |
 | Threshold on aggregated metric only | WARNING | Cannot identify which scenario failed | Use per-scenario thresholds when needed |
-| Silent `catch` block (`catch {}` or ignored error) | ERROR | Hides runtime failures and corrupts result trust | Log context and rethrow or fail deterministically |
+| Silent `catch` block (empty catch or ignored error) | ERROR | Hides runtime failures and corrupts result trust | Log context and rethrow or fail deterministically |
 | Unsafe `JSON.parse` on dynamic input | WARNING | Invalid payloads crash runs without actionable context | Wrap parse in helper with explicit error message |
 | Static-analysis quality warning (S7726-class) ignored | WARNING | Maintains fragile code patterns that regress reliability | Refactor pattern and document mitigation in validation output |
+
+Note on `S7726-class`: This refers to a static-analysis quality finding category (for example from Sonar-style reports). Treat it as actionable when the analyzer output includes rule ID/class metadata (e.g., `S7726`) in CI logs or quality report output.
 
 ## Remediation Examples
 
@@ -162,7 +164,7 @@ export const options = {
 let payload;
 try {
   payload = JSON.parse(rawPayload);
-} catch {}
+} catch (err) {}
 ```
 
 ```javascript
