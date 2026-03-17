@@ -52,16 +52,20 @@ export default function () {
 
 ### Implementation
 ```javascript
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+import http from 'k6/http';
+
+const BASE_URL = __ENV.BASE_URL;
 const API_TOKEN = __ENV.API_TOKEN;
 
-if (!API_TOKEN) {
-  throw new Error('API_TOKEN environment variable is required');
+if (!BASE_URL || !API_TOKEN) {
+  throw new Error('BASE_URL and API_TOKEN environment variables are required');
 }
 
 export default function () {
   const response = http.get(`${BASE_URL}/api/data`, {
     headers: { 'Authorization': `Bearer ${API_TOKEN}` },
+    timeout: '30s',
+    tags: { name: 'api-data' },
   });
 }
 ```

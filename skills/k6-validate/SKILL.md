@@ -26,6 +26,12 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 Do not continue validation after fallback.
 
+## Language Policy
+
+1. If user language is explicit, answer in that language.
+2. If language is not explicit, default to English.
+3. Keep command names, k6 metric keys, and code identifiers in English.
+
 ## Validation Rules
 
 <validation-rules>
@@ -48,9 +54,12 @@ Do not continue validation after fallback.
 
 4. **Anti-Patterns to Flag**:
    - Hard-coded credentials
-   - Missing environment variable fallbacks
+   - Insecure hard-coded environment defaults/fallbacks in runnable scripts
    - Unbounded loops
    - Synchronous waits without reason
+   - Silent `catch` blocks that swallow errors
+   - Unsafe parsing without guarded failure handling
+   - Quality violations mapped to static-analysis concerns (including S7726-class findings)
 </validation-rules>
 
 ## Required k6 Invariants
@@ -77,4 +86,5 @@ Keep this file focused on validation workflow. Place deep guidance in:
 3. Validate syntax and structure.
 4. Validate performance best practices and protocol-specific rules.
 5. Enforce required threshold and load-profile invariants.
-6. Return deterministic report with pass/warn/fail, findings, and fixes.
+6. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals).
+7. Return deterministic report with pass/warn/fail, findings, and fixes.

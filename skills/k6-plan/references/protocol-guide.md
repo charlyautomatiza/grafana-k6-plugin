@@ -2,12 +2,24 @@
 
 ## HTTP
 
+### Method Confirmation Checklist
+
+Before generating executable HTTP scripts:
+
+1. Confirm endpoint path and primary method.
+2. For write methods (`POST`, `PUT`, `PATCH`), confirm payload contract and expected status codes.
+3. Confirm auth mechanism and required environment variables.
+
 ### Basic GET Request
 ```javascript
 import http from 'k6/http';
 import { check } from 'k6';
 
-const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+const BASE_URL = __ENV.BASE_URL;
+
+if (!BASE_URL) {
+  throw new Error('BASE_URL environment variable is required');
+}
 
 export default function () {
   const response = http.get(`${BASE_URL}/users`, {
@@ -26,30 +38,43 @@ export default function () {
 ```javascript
 import http from 'k6/http';
 
-const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+const BASE_URL = __ENV.BASE_URL;
+
+if (!BASE_URL) {
+  throw new Error('BASE_URL environment variable is required');
+}
 
 export default function () {
   const responses = http.batch([
     ['GET', `${BASE_URL}/users`],
     ['GET', `${BASE_URL}/products`],
-    ['POST', `${BASE_URL}/orders`, JSON.stringify({ item: 'test' })],
+    [
+      'POST',
+      `${BASE_URL}/orders`,
+      JSON.stringify({ item: 'test' }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: '30s',
+        tags: { name: 'create-order' },
+      },
+    ],
   ]);
   
   // Process responses[0], responses[1]
 }
 ```
 
-### POST with Auth
+### Login and Token Extraction
 ```javascript
 import http from 'k6/http';
+import { check } from 'k6';
 
-const BASE_URL = __ENV.BASE_URL || 'https://test.k6.io';
+const BASE_URL = __ENV.BASE_URL;
 const API_USER = __ENV.API_USER;
 const API_PASSWORD = __ENV.API_PASSWORD;
-const API_TOKEN = __ENV.API_TOKEN;
 
-if (!API_USER || !API_PASSWORD || !API_TOKEN) {
-  throw new Error('API_USER, API_PASSWORD, and API_TOKEN environment variables are required');
+if (!BASE_URL || !API_USER || !API_PASSWORD) {
+  throw new Error('BASE_URL, API_USER, and API_PASSWORD environment variables are required');
 }
 
 export default function () {
@@ -61,12 +86,53 @@ export default function () {
   const params = {
     headers: {
       'Content-Type': 'application/json',
+    },
+    timeout: '30s',
+    tags: { name: 'login' },
+  };
+
+  const loginRes = http.post(`${BASE_URL}/login`, payload, params);
+
+  check(loginRes, {
+    'login status is 200': (r) => r.status === 200,
+  });
+
+  let token;
+  try {
+    token = loginRes.json('token');
+    if (!token) {
+      throw new Error('token field missing');
+    }
+  } catch (err) {
+    throw new Error(`Invalid login response JSON: ${err.message}`);
+  }
+}
+```
+
+### Authenticated POST
+```javascript
+import http from 'k6/http';
+
+const BASE_URL = __ENV.BASE_URL;
+const API_TOKEN = __ENV.API_TOKEN;
+
+if (!BASE_URL || !API_TOKEN) {
+  throw new Error('BASE_URL and API_TOKEN environment variables are required');
+}
+
+export default function () {
+  const payload = JSON.stringify({ item: 'test' });
+
+  const params = {
+    headers: {
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${API_TOKEN}`,
     },
     timeout: '30s',
+    tags: { name: 'create-order' },
   };
-  
-  http.post(`${BASE_URL}/login`, payload, params);
+
+  http.post(`${BASE_URL}/orders`, payload, params);
 }
 ```
 
@@ -77,7 +143,11 @@ export default function () {
 import grpc from 'k6/grpc';
 import { check } from 'k6';
 
-const GRPC_ADDR = __ENV.GRPC_ADDR || 'grpcbin.test.k6.io:9001';
+const GRPC_ADDR = __ENV.GRPC_ADDR;
+
+if (!GRPC_ADDR) {
+  throw new Error('GRPC_ADDR environment variable is required');
+}
 
 const client = new grpc.Client();
 client.load(['definitions'], 'service.proto');
@@ -113,12 +183,12 @@ const response = client.invoke('service.Method', request, { metadata });
 ```javascript
 import { browser } from 'k6/browser';
 
-const BASE_URL = __ENV.BASE_URL || 'https://quickpizza.grafana.com/login';
+const BASE_URL = __ENV.BASE_URL;
 const UI_USER = __ENV.UI_USER;
 const UI_PASSWORD = __ENV.UI_PASSWORD;
 
-if (!UI_USER || !UI_PASSWORD) {
-  throw new Error('UI_USER and UI_PASSWORD environment variables are required');
+if (!BASE_URL || !UI_USER || !UI_PASSWORD) {
+  throw new Error('BASE_URL, UI_USER, and UI_PASSWORD environment variables are required');
 }
 
 export default async function () {
@@ -148,7 +218,11 @@ export default async function () {
 ```javascript
 import { browser } from 'k6/browser';
 
-const BASE_URL = __ENV.BASE_URL || 'https://quickpizza.grafana.com';
+const BASE_URL = __ENV.BASE_URL;
+
+if (!BASE_URL) {
+  throw new Error('BASE_URL environment variable is required');
+}
 
 export default async function () {
   const context = await browser.newContext();
