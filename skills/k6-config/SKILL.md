@@ -67,6 +67,12 @@ Generate separate configs for dev/staging/prod with environment-specific:
 - Default to dashboard disabled for CI and headless execution
 </patterns>
 
+## Responsibility Boundary With k6-executor
+
+- `k6-executor` decides executor-level recommendation for a specific scenario and emits one dashboard recommendation for that scenario.
+- `k6-config` applies environment-level policy (dev/staging/prod) and operational defaults.
+- If both are used, `k6-config` must preserve executor recommendation intent while enforcing environment safety defaults.
+
 ## Progressive Disclosure
 
 Keep this file focused on execution workflow. Place deep guidance in:
@@ -79,6 +85,6 @@ Keep this file focused on execution workflow. Place deep guidance in:
 2. Run Tool Discovery Protocol if critical input is missing.
 3. Validate or derive thresholds for each environment.
 4. Validate or derive `vus` and `duration` for each environment.
-5. Determine per-environment dashboard policy (`enable` only when explicitly requested for local analysis).
+5. Determine per-environment dashboard policy (`enable` only when explicitly requested for local analysis), aligned with `k6-executor` gate semantics.
 6. Generate deterministic config output and `.env.example` guidance, explicitly warning that real env files and generated reports must remain uncommitted.
 7. Include a short summary of derived assumptions.

@@ -26,6 +26,8 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 Do not continue recommendation after fallback.
 
+If user provides explicit SLA targets, request one deterministic confirmation before applying them.
+
 ## Language Policy
 
 1. If user language is explicit, answer in that language.
@@ -44,6 +46,10 @@ Always enforce these validations before final recommendation:
    - VU-based executors must include explicit VUs.
    - Arrival-rate executors must include capacity controls (`preAllocatedVUs`, `maxVUs`) and a duration.
    - Iteration-based executors must include explicit `vus` and `iterations`.
+3. **Parameter coherence is required**
+  - Arrival-rate executors must satisfy `preAllocatedVUs <= maxVUs`.
+  - `duration` values must be explicit and valid for time-based executors.
+  - `externally-controlled` recommendations must include execution-context assumptions.
 
 ## Decision Tree
 
@@ -61,7 +67,28 @@ Ask user three clarifying questions if `goal` parameter is incomplete:
 3. **Is duration time-based or iteration-based?**
    - Time-based → use duration parameter
    - Iteration-based → per-vu-iterations or shared-iterations
+
+If user requirements conflict (for example strict RPS target and strict VU cap), ask one tie-break question:
+
+- "Which is more critical for this run: exact request-rate target or strict virtual-user ceiling?"
 </decision-tree>
+
+## Response Modes
+
+- **Brief mode**: Return executor choice, minimal valid config, threshold summary, dashboard recommendation.
+- **Detailed mode**: Include decision rationale, alternatives, guardrail validation table, and assumptions.
+- Default to brief mode when user asks for a quick answer or the request is narrow and unambiguous.
+
+## SLA Reconfirmation Rule
+
+When user provides explicit SLA values (latency/error/check targets), do this before final recommendation:
+
+1. Re-state parsed SLA values exactly.
+2. Ask for confirmation once.
+3. Apply confirmed values in thresholds.
+4. If values are technically inconsistent, keep user-provided values and add a short improvement suggestion.
+
+Do not silently replace explicit user SLAs with defaults.
 
 ## Executor Recommendations
 
@@ -172,7 +199,37 @@ Apply this gate before final recommendation:
 
 1. If scenario involves browser UX troubleshooting or local interactive analysis, recommend `K6_WEB_DASHBOARD=true`.
 2. If scenario is CI/non-interactive, keep dashboard disabled by default and prefer exported summaries.
-3. State one deterministic dashboard recommendation: `enable` or `disable` with rationale.
+3. For all other cases, default to disabled unless user explicitly asks for interactive local monitoring.
+4. State one deterministic dashboard recommendation: `enable` or `disable` with rationale.
+
+Always emit a visible section in output:
+
+```md
+## Web Dashboard Recommendation
+K6_WEB_DASHBOARD=<true|false> - <short rationale>
+```
+
+This policy must remain aligned with `k6-config` dashboard controls.
+
+## Output Contract
+
+Every recommendation response must include these sections in order:
+
+1. Executor Recommendation
+2. Configuration (valid k6 options snippet)
+3. Thresholds (confirmed or defaulted)
+4. Guardrail Validation
+5. Web Dashboard Recommendation
+6. Next Step
+
+For arrival-rate executors, Guardrail Validation must include:
+
+- `preAllocatedVUs <= maxVUs` check
+- explicit capacity assumption note
+
+For `externally-controlled`, include one context assumption line:
+
+- "Assumption: execution environment supports external control workflow for this scenario."
 
 ## Complete Configuration Example
 
@@ -208,11 +265,13 @@ Keep this file focused on decision workflow. Place deep guidance in:
 
 ## Workflow
 
-1. Parse user goal and constraints.
-2. Run Tool Discovery Protocol if required inputs are missing.
-3. If ambiguous, ask decision-tree questions.
-4. Map answers to the most appropriate executor.
-5. Validate threshold and load-profile invariants.
-6. Apply Web Dashboard Recommendation Gate.
-7. Provide a deterministic configuration example.
-8. Explain rationale and next steps.
+1. Parse user goal, constraints, and optional SLAs.
+2. Select response mode (brief or detailed).
+3. Run Tool Discovery Protocol if required inputs are missing.
+4. If explicit SLAs are present, apply SLA Reconfirmation Rule.
+5. If ambiguous or conflicting, ask decision-tree questions (max two rounds).
+6. Map answers to the most appropriate executor.
+7. Validate thresholds, load-profile invariants, and parameter coherence.
+8. Apply Web Dashboard Recommendation Gate and emit it visibly.
+9. Provide deterministic configuration example following Output Contract.
+10. Explain rationale and next step.
