@@ -97,9 +97,14 @@ export default function () {
     'login status is 200': (r) => r.status === 200,
   });
 
-  const token = loginRes.json('token');
-  if (!token) {
-    throw new Error('Login response did not contain token');
+  let token;
+  try {
+    token = loginRes.json('token');
+    if (!token) {
+      throw new Error('token field missing');
+    }
+  } catch (err) {
+    throw new Error(`Invalid login response JSON: ${err.message}`);
   }
 }
 ```
