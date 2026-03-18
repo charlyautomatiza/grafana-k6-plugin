@@ -85,6 +85,6 @@ Keep this file focused on execution workflow. Place deep guidance in:
 2. Run Tool Discovery Protocol if critical input is missing.
 3. Validate or derive thresholds for each environment.
 4. Validate or derive `vus` and `duration` for each environment.
-5. Determine per-environment dashboard policy (`enable` only when explicitly requested for local analysis), aligned with `k6-executor` gate semantics.
+5. Determine per-environment dashboard policy (`enable` only when explicitly requested for local analysis, or when the scenario requires browser UX troubleshooting differential analysis), aligned with `k6-executor` gate semantics.
 6. Generate deterministic config output and `.env.example` guidance, explicitly warning that real env files and generated reports must remain uncommitted.
 7. Include a short summary of derived assumptions.

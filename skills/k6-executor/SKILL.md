@@ -26,8 +26,6 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 Do not continue recommendation after fallback.
 
-If user provides explicit SLA targets, request one deterministic confirmation before applying them.
-
 ## Language Policy
 
 1. If user language is explicit, answer in that language.
@@ -47,9 +45,9 @@ Always enforce these validations before final recommendation:
    - Arrival-rate executors must include capacity controls (`preAllocatedVUs`, `maxVUs`) and a duration.
    - Iteration-based executors must include explicit `vus` and `iterations`.
 3. **Parameter coherence is required**
-  - Arrival-rate executors must satisfy `preAllocatedVUs <= maxVUs`.
-  - `duration` values must be explicit and valid for time-based executors.
-  - `externally-controlled` recommendations must include execution-context assumptions.
+   - Arrival-rate executors must satisfy `preAllocatedVUs <= maxVUs`.
+   - `duration` values must be explicit and valid for time-based executors.
+   - `externally-controlled` recommendations must include execution-context assumptions.
 
 ## Decision Tree
 
@@ -200,7 +198,7 @@ Apply this gate before final recommendation:
 1. If scenario involves browser UX troubleshooting or local interactive analysis, recommend `K6_WEB_DASHBOARD=true`.
 2. If scenario is CI/non-interactive, keep dashboard disabled by default and prefer exported summaries.
 3. For all other cases, default to disabled unless user explicitly asks for interactive local monitoring.
-4. State one deterministic dashboard recommendation: `enable` or `disable` with rationale.
+4. State one deterministic dashboard recommendation: `K6_WEB_DASHBOARD=true` or `K6_WEB_DASHBOARD=false` with rationale.
 
 Always emit a visible section in output:
 
