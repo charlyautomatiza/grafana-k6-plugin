@@ -167,7 +167,7 @@ Parse SLA string to extract threshold conditions. Supported syntax:
 - Multiple constraints on the same metric (range validation)
 - Translates to multiple threshold entries for the same k6 metric
 
-**Note:** OR logic is not supported in this version. All conditions are treated as mandatory (AND).
+**Note:** OR logic is not supported in this skill behavior. All conditions are treated as mandatory (AND).
 
 ### Parsing Examples
 - Input: `p95<400ms,error<1%` → p95 AND error rate thresholds
@@ -186,7 +186,7 @@ Defaults per profile when SLA is not provided:
 ### HTTP
 - Use `http.get()`, `http.post()`, `http.batch()` for parallel requests
 - Metrics: `http_req_duration`, `http_req_failed`
-- Always include timeout: `timeout: '30s'`
+- Include explicit timeout guidance (baseline `timeout: '30s'`) for executable HTTP examples; missing timeout should be validated as `WARNING` unless stricter policy is explicitly enabled.
 - Tag requests: `tags: { name: 'api-call' }`
 
 ### gRPC

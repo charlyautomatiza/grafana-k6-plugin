@@ -81,6 +81,11 @@ Round definition:
 - **Round 1 (baseline block)**: ask the three baseline questions as one consolidated block.
 - **Round 2 (tie-break only)**: ask at most one tie-break question if conflict remains.
 
+Early scenario routing (before Round 1):
+
+1. If user intent explicitly matches smoke-like validation (`smoke test`, `quick check`, `sanity check`, `verify endpoint responds`), default to `constant-vus`.
+2. Keep this default unless the user explicitly requires a different control model (for example strict total-iterations accounting or strict request-rate control).
+
 Ask user the baseline questions if `goal` parameter is incomplete:
 
 1. **Do you need to control VU count or request rate?**
@@ -98,6 +103,9 @@ Ask user the baseline questions if `goal` parameter is incomplete:
 If user requirements conflict (for example strict RPS target and strict VU cap), ask one tie-break question in Round 2:
 
 - "Which is more critical for this run: exact request-rate target or strict virtual-user ceiling?"
+
+If Round 2 tie-break question is asked, stop output immediately after that single question and wait for user response.
+Do not emit executor recommendation, configuration, thresholds, guardrail validation, web dashboard recommendation, rationale, alternatives, or next step while tie-break is unresolved.
 </decision-tree>
 
 ## Response Modes
@@ -250,6 +258,11 @@ Every recommendation response must include these sections in order:
 5. Web Dashboard Recommendation
 6. Next Step
 
+Tie-break guard:
+
+- When Round 2 tie-break is pending, do not emit Output Contract sections.
+- Emit only the tie-break question and wait for user input.
+
 Guardrail Validation must include executor-specific checks:
 
 - `constant-vus`: explicit `vus` and `duration`
@@ -307,9 +320,11 @@ Keep this file focused on decision workflow. Place deep guidance in:
 2. Select response mode (brief or detailed).
 3. Run Tool Discovery Protocol if required inputs are missing.
 4. If explicit SLAs are present, apply SLA Reconfirmation Rule.
-5. If ambiguous or conflicting, run decision-tree rounds with the explicit contract (Round 1 baseline, Round 2 tie-break only).
-6. Map answers to the most appropriate executor.
-7. Validate thresholds, load-profile invariants, and parameter coherence.
-8. Apply Web Dashboard Recommendation Gate and emit it visibly.
-9. Provide deterministic configuration example following Output Contract.
-10. Explain rationale and next step.
+5. Apply early scenario routing for explicit smoke-like intents before baseline rounds.
+6. If ambiguous or conflicting, run decision-tree rounds with the explicit contract (Round 1 baseline, Round 2 tie-break only).
+7. If Round 2 tie-break is asked, stop and wait; do not emit final recommendation content until user resolves the tie-break.
+8. Map answers to the most appropriate executor.
+9. Validate thresholds, load-profile invariants, and parameter coherence.
+10. Apply Web Dashboard Recommendation Gate and emit it visibly.
+11. Provide deterministic configuration example following Output Contract.
+12. Explain rationale and next step.
