@@ -55,7 +55,12 @@ Do not emit final validation findings after this fallback.
    - `export const options` correctly defined
    - `export default function` present
    - Thresholds configured
-   - Import statements valid
+   - Import statements valid using explicit usage-based minimum checklist:
+     - require `k6/http` when `http.*` is used
+     - require `k6` when `check` or `sleep` is used
+     - require `k6/grpc` when gRPC APIs are used
+     - require `k6/browser` when browser automation APIs are used
+   - For broader module compatibility and allowed import coverage, cross-check `references/goja-k6-compatibility-matrix.md`.
 
 2. **Performance Best Practices**:
    - Sleep between iterations (avoid tight loops)
@@ -66,6 +71,7 @@ Do not emit final validation findings after this fallback.
 3. **Protocol-Specific**:
    - HTTP: timeouts set, checks included
    - gRPC: connections properly closed
+   - gRPC: flag `client.connect()` outside `default function`, `setup()`, or `teardown()` as `WARNING` (connection lifecycle leakage risk)
    - Browser: page/context closure
 
 4. **Anti-Patterns to Flag**:
@@ -84,7 +90,8 @@ Always enforce these validations as mandatory checks:
 
 1. **Thresholds are required**
    - Flag as error when thresholds are missing.
-   - Flag as warning when thresholds exist but do not reflect stated SLA.
+   - If user provides explicit SLA values in the validation prompt/context, compare thresholds against that SLA.
+   - Flag as warning when thresholds exist but are more lax than stated SLA.
 2. **Load profile is required**
    - Flag as error when no explicit load profile exists.
    - Require explicit `vus` and `duration` for time-based cases, or clear equivalent (`stages`, `iterations` + `vus`) for scenario-based definitions.
@@ -98,6 +105,11 @@ Always enforce these validations as mandatory checks:
 ## Output Contract
 
 Every validation response must include these sections in order:
+
+Output artifact requirements:
+
+- Use a single stable output artifact name: `validation-report.md`.
+- Use Markdown as the required output format.
 
 1. Validation Summary (`pass`/`warn`/`fail`)
 2. Scope and Assumptions
@@ -119,5 +131,6 @@ Keep this file focused on validation workflow. Place deep guidance in:
 3. Validate syntax and structure.
 4. Validate performance best practices and protocol-specific rules.
 5. Enforce required threshold and load-profile invariants.
-6. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals).
-7. Return deterministic report using the Output Contract section order.
+6. If explicit SLA is present, compare script thresholds against the declared SLA and emit `WARNING` for more lax thresholds.
+7. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals).
+8. Return deterministic report in `validation-report.md` using Markdown and the Output Contract section order.

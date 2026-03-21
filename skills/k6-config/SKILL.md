@@ -65,14 +65,20 @@ Always enforce these validations before returning configuration output:
    - If `stages` are used, ensure stage durations are explicit and non-empty.
 4. **Secrets and runnable safety are required**
    - Never hard-code credentials or tokens in runnable examples.
+   - Never hard-code base URLs for real environments in runnable examples.
    - Require environment-variable placeholders (`__ENV` or `.env.example`) for secrets.
+   - Require environment-variable placeholders for base URLs (prefer `__ENV.BASE_URL` or equivalent per environment).
+
+5. **Multi-environment coherence is required**
+   - Validate logical progression of VUs across environments: `dev <= staging <= prod`.
+   - If progression is violated, emit `WARNING` unless user provided explicit justification for override.
 
 ## Configuration Patterns
 
 <patterns>
 ### Environment-Based Config
 Generate separate configs for dev/staging/prod with environment-specific:
-- Base URLs
+- Base URLs (from environment variables, not hard-coded runnable values)
 - VU counts (scaled by environment)
 - Duration (shorter in dev)
 - Threshold strictness
@@ -115,7 +121,15 @@ Every response must include these sections in order:
 4. Load Profile (explicit `vus`/`duration` or staged equivalent)
 5. Guardrail Validation
 6. Web Dashboard Policy
-7. Assumptions and Next Step
+7. Derived Assumptions and Next Step
+
+Derived Assumptions requirements:
+
+- This section is mandatory.
+- It must include, at minimum:
+   - source of each derived threshold value
+   - rationale for VU scaling by environment
+   - rationale for selected duration/profile
 
 ## Progressive Disclosure
 
@@ -129,7 +143,8 @@ Keep this file focused on execution workflow. Place deep guidance in:
 2. Run Tool Discovery Protocol if critical input is missing.
 3. Validate or derive thresholds for each environment.
 4. Validate or derive `vus` and `duration` for each environment.
-5. Determine per-environment dashboard policy using shared precedence with `k6-executor` (CI/headless first, local-browser second, default false otherwise).
-6. Generate deterministic config output and `.env.example` guidance, explicitly warning that real env files and generated reports must remain uncommitted.
-7. Validate guardrails and return output using the Output Contract section order.
-8. Include a short summary of derived assumptions.
+5. Enforce multi-environment coherence (`dev <= staging <= prod`) or emit explicit `WARNING` when justified override is missing.
+6. Determine per-environment dashboard policy using shared precedence with `k6-executor` (CI/headless first, local-browser second, default false otherwise).
+7. Generate deterministic config output and `.env.example` guidance, explicitly warning that real env files and generated reports must remain uncommitted.
+8. Validate guardrails and return output using the Output Contract section order.
+9. Include a mandatory `Derived Assumptions` section with threshold source, VU scaling rationale, and duration/profile rationale.

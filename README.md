@@ -1,14 +1,21 @@
-# k6 Performance Testing Skill
+<p align="center">
+  <a href="https://www.youtube.com/c/CharlyAutomatiza?sub_confirmation=1"><img alt="YouTube" src="https://img.shields.io/badge/CharlyAutomatiza-Youtube-FF0000.svg" style="max-height: 300px;"></a>
+  <a href="https://discord.gg/wwM9GwxmRZ"><img alt="Discord" src="https://img.shields.io/badge/CharlyAutomatiza-Discord-5865F2.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://x.com/char_automatiza"><img alt="X" src="https://img.shields.io/badge/@char__automatiza-X-000000.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://www.linkedin.com/in/gautocarlos/"><img alt="LinkedIn" src="https://img.shields.io/badge/Carlos%20Gauto-LinkedIn-0077B5.svg" style="max-height: 300px;"></a>
+  <a href="https://charlyautomatiza.tech"><img alt="Website" src="https://img.shields.io/badge/Website-charlyautomatiza.tech-4285F4.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://dev.to/charlyautomatiza"><img alt="DEV Community" src="https://img.shields.io/badge/CharlyAutomatiza-DEV.to-0A0A0A.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://www.instagram.com/charlyautomatiza/"><img alt="Instagram" src="https://img.shields.io/badge/CharlyAutomatiza-Instagram-E4405F.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://www.twitch.tv/charlyautomatiza"><img alt="Twitch" src="https://img.shields.io/badge/CharlyAutomatiza-Twitch-9146FF.svg" style="max-height: 300px;"></a>
+</p>
 
-> Claude Skills for k6 performance testing with interactive planning, executor selection, script validation, and multi-environment configuration.
+# k6 Performance Testing Skills
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/charlyautomatiza/grafana-k6-skill)
-[![k6](https://img.shields.io/badge/k6-compatible-yellowgreen.svg)](https://k6.io)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+> Skills for k6 performance testing with interactive planning, executor selection, script validation, and multi-environment configuration.
 
 ## 🎯 Overview
 
-This skill enables Claude to plan, generate, and validate k6 performance testing scripts following official best practices. It provides deterministic recommendations, interactive parameter resolution, and comprehensive support for HTTP, gRPC, and browser testing protocols.
+These skills enable Claude to plan, generate, and validate k6 performance testing scripts following official best practices. They provide deterministic recommendations, interactive parameter resolution, and comprehensive support for HTTP, gRPC, and browser testing protocols.
 
 ### Key Features
 
@@ -23,19 +30,16 @@ This skill enables Claude to plan, generate, and validate k6 performance testing
 - **🧭 Method-Aware HTTP Planning**: Explicit HTTP method confirmation when required
 - **🖥️ Dashboard Guidance**: Deterministic recommendation to enable/disable k6 web dashboard
 
-## ⚠️ v0.1.0 Initial Release
+## ⚠️ Architecture Notes
 
-Version 0.1.0 is the initial release with architecture aligned to the **official Claude Skills specification**. 
+This repository is aligned with the **official Claude Skills specification**.
 
-**Architecture**:
+**Architecture:**
 - ✅ **Self-contained SKILL.md files** with all logic embedded
 - ✅ **Per-skill references directories** for focused guidance
 - ✅ **Simplified plugin.json** with only standard fields (auto-discovery of skills)
 - ✅ **Four core skills**: k6-plan, k6-executor, k6-config, k6-validate
 - ✅ **Deterministic recommendations** - same inputs always produce identical outputs
-
-**Why 0.1.0?**:
-No production code uses this yet. This is the initial stable release following the official Claude Skills specification. All APIs and skill behaviors may evolve as we gather real-world usage feedback.
 
 ## 🚀 Quick Start
 
@@ -374,18 +378,6 @@ The skill enforces best practices. Every generated script includes:
 - ✅ Request tagging for metrics
 - ✅ Error handling
 
-## 📦 Version History
-
-### v0.1.0 (2026-03-07)
-- Initial pre-release following official Claude Skills specification
-- Self-contained SKILL.md files with embedded logic
-- References directory for examples and documentation
-- Installation via npx skills add
-- Simplified plugin.json (standard fields only)
-- Protocols: HTTP, gRPC, k6/browser
-- Interactive ambiguity resolution with 3-question protocol
-- Deterministic recommendations for k6 performance testing
-
 ## 🛠️ Development
 
 ### Testing the Skill
@@ -403,16 +395,9 @@ The skill enforces best practices. Every generated script includes:
 4. Test thoroughly with Claude
 5. Submit a pull request
 
-### Versioning
-
-This project follows [Semantic Versioning](https://semver.org/):
-- **Major**: Breaking changes to skill invocation or output format
-- **Minor**: New skills or non-breaking features
-- **Patch**: Bug fixes, documentation, examples
-
 ## 🔄 Updating
 
-To update to a new version:
+To get the latest repository changes:
 
 ```bash
 npx skills update charlyautomatiza/grafana-k6-skill
