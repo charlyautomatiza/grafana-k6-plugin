@@ -94,6 +94,7 @@ Generate separate configs for dev/staging/prod with environment-specific:
 - `k6-executor` decides executor-level recommendation for a specific scenario and emits one dashboard recommendation for that scenario.
 - `k6-config` applies environment-level policy (dev/staging/prod) and operational defaults.
 - If both are used, `k6-config` must preserve executor recommendation intent while enforcing environment safety defaults.
+- Override precedence rule: CI safety defaults override executor recommendation only when explicit conflict exists (e.g., executor recommends `K6_WEB_DASHBOARD=true` for browser UX troubleshooting, but script runs in CI/non-interactive). Local runs preserve executor intent unless user explicitly disables via environment configuration.
 
 Dashboard precedence order shared with `k6-executor`:
 

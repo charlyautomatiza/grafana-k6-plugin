@@ -63,10 +63,10 @@ Always enforce these validations before final recommendation:
 3. **Parameter coherence is required**
    - Arrival-rate executors must satisfy `preAllocatedVUs <= maxVUs`.
    - `duration` values must be explicit and valid for time-based executors.
-  - `constant-vus` must include explicit `vus` and `duration`.
-  - `ramping-vus` must include explicit `startVUs` and non-empty `stages`.
-  - `ramping-arrival-rate` must include `startRate`, `timeUnit`, non-empty `stages`, and valid capacity controls.
-  - `per-vu-iterations` and `shared-iterations` must include explicit `vus` and `iterations`.
+   - `constant-vus` must include explicit `vus` and `duration`.
+   - `ramping-vus` must include explicit `startVUs` and non-empty `stages`.
+   - `ramping-arrival-rate` must include `startRate`, `timeUnit`, non-empty `stages`, and valid capacity controls.
+   - `per-vu-iterations` and `shared-iterations` must include explicit `vus` and `iterations`.
    - `externally-controlled` recommendations must include execution-context assumptions.
 4. **Secrets and runnable safety are required**
   - Never hard-code credentials or tokens in runnable snippets.
