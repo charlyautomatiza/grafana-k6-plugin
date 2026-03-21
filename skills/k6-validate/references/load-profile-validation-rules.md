@@ -192,7 +192,7 @@ stages: [
 ### externally-controlled
 - **Required:** Explicit `vus`, `maxVUs`, `duration`, and execution-context assumption (control workflow documented externally)
 - **Typical:** REST calls to set VUs and runState post-initialization
-- **Note:** Aligns with k6-executor guardrail requiring explicit baseline parameters and documented external control context
+- **Note:** Loosely aligns with k6-executor guardrails by requiring explicit baseline parameters and a documented external control context, but is not a strict field-for-field mapping
 
 ## Edge Cases
 

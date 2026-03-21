@@ -65,12 +65,13 @@ Always enforce these validations before final recommendation:
    - `duration` values must be explicit and valid for time-based executors.
    - `constant-vus` must include explicit `vus` and `duration`.
    - `ramping-vus` must include explicit `startVUs` and non-empty `stages`.
+   - `constant-arrival-rate` must include `rate`, `timeUnit`, `duration`, and valid capacity controls (`preAllocatedVUs`, `maxVUs`).
    - `ramping-arrival-rate` must include `startRate`, `timeUnit`, non-empty `stages`, and valid capacity controls.
    - `per-vu-iterations` and `shared-iterations` must include explicit `vus` and `iterations`.
    - `externally-controlled` recommendations must include execution-context assumptions.
 4. **Secrets and runnable safety are required**
-  - Never hard-code credentials or tokens in runnable snippets.
-  - Require environment variables (`__ENV`) when auth or secrets are needed.
+   - Never hard-code credentials or tokens in runnable snippets.
+   - Require environment variables (`__ENV`) when auth or secrets are needed.
 
 ## Decision Tree
 
@@ -101,9 +102,9 @@ If user requirements conflict (for example strict RPS target and strict VU cap),
 
 ## Response Modes
 
-- **Brief mode**: Return executor choice, minimal valid config, threshold summary, dashboard recommendation.
-- **Detailed mode**: Include decision rationale, alternatives, guardrail validation table, and assumptions.
-- Default to brief mode when user asks for a quick answer or the request is narrow and unambiguous.
+- **Brief mode**: Return a concise version of **all sections required by the Output Contract** (including Guardrail Validation and Next Step), focusing on executor choice, minimal valid config, threshold summary, and dashboard recommendation.
+- **Detailed mode**: Expand on all Output Contract sections with full decision rationale, alternatives, a more thorough guardrail validation table, and explicit assumptions.
+- Default to brief mode when user asks for a quick answer or the request is narrow and unambiguous, but still include every Output Contract section (even if heavily condensed).
 
 ## SLA Reconfirmation Rule
 
@@ -233,10 +234,10 @@ Always emit a visible section in output:
 
 ```md
 ## Web Dashboard Recommendation
-K6_WEB_DASHBOARD=<true|false> - <short rationale>
+K6_WEB_DASHBOARD=true — <short rationale>
 ```
 
-This policy must remain aligned with `k6-config` dashboard controls.
+Emit the concrete value (`true` or `false`), never the placeholder `<true|false>`. This policy must remain aligned with `k6-config` dashboard controls.
 
 ## Output Contract
 

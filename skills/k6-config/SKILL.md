@@ -56,8 +56,10 @@ Always enforce these validations before returning configuration output:
    - Every generated environment config must include thresholds.
    - If SLA values are missing, derive defaults and state them explicitly.
 2. **Load profile is required**
-   - Every generated environment config must include explicit `vus` and `duration`.
-   - If missing, derive defaults per environment and state derivation logic.
+   - Every generated environment config must define a concrete load profile:
+     - either explicit `vus` and `duration`, or
+     - a staged equivalent using `stages` (or `scenarios` that use `stages`).
+   - If a load profile is missing, derive defaults per environment and state derivation logic.
 3. **Parameter coherence is required**
    - If arrival-rate style parameters are included, enforce `preAllocatedVUs <= maxVUs`.
    - If `stages` are used, ensure stage durations are explicit and non-empty.
@@ -98,9 +100,9 @@ Generate separate configs for dev/staging/prod with environment-specific:
 
 Dashboard precedence order shared with `k6-executor`:
 
-1. CI/non-interactive contexts default to `K6_WEB_DASHBOARD=false` unless user explicitly opts in.
-2. Local interactive browser troubleshooting defaults to `K6_WEB_DASHBOARD=true`.
-3. Local non-browser runs default to `K6_WEB_DASHBOARD=false` unless user explicitly opts in.
+1. CI/non-interactive contexts default to `K6_WEB_DASHBOARD=false`; CI policy overrides any executor recommendation regardless of executor intent.
+2. Local interactive browser troubleshooting defaults to `K6_WEB_DASHBOARD=true`; an executor-provided `K6_WEB_DASHBOARD=true` recommendation counts as an explicit opt-in for this case.
+3. Local non-browser runs default to `K6_WEB_DASHBOARD=false` unless user or executor explicitly opts in.
 4. All other contexts default to `K6_WEB_DASHBOARD=false`.
 
 ## Output Contract
