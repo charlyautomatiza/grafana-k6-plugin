@@ -186,7 +186,7 @@ Defaults per profile when SLA is not provided:
 ### HTTP
 - Use `http.get()`, `http.post()`, `http.batch()` for parallel requests
 - Metrics: `http_req_duration`, `http_req_failed`
-- Include explicit timeout guidance (baseline `timeout: '30s'`) for executable HTTP examples; missing timeout should be validated as `WARNING` unless stricter policy is explicitly enabled.
+- Include explicit timeout guidance (baseline `timeout: '30s'`) for executable HTTP examples; missing timeout should be validated as `WARNING`.
 - Tag requests: `tags: { name: 'api-call' }`
 
 ### gRPC

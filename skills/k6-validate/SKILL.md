@@ -55,11 +55,12 @@ Do not emit final validation findings after this fallback.
    - `export const options` correctly defined
    - `export default function` present
    - Thresholds configured
-   - Import statements valid using explicit usage-based checklist:
+   - Import statements valid using explicit usage-based minimum checklist:
      - require `k6/http` when `http.*` is used
      - require `k6` when `check` or `sleep` is used
      - require `k6/grpc` when gRPC APIs are used
      - require `k6/browser` when browser automation APIs are used
+   - For broader module compatibility and allowed import coverage, cross-check `references/goja-k6-compatibility-matrix.md`.
 
 2. **Performance Best Practices**:
    - Sleep between iterations (avoid tight loops)

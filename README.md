@@ -1,10 +1,10 @@
 <p align="center">
-  <a href="https://www.youtube.com/c/CharlyAutomatiza?sub_confirmation=1"><img src="https://img.shields.io/badge/CharlyAutomatiza-Youtube-FF0000.svg" style="max-height: 300px;"></a>
-  <a href="https://discord.gg/wwM9GwxmRZ"><img src="https://img.shields.io/badge/CharlyAutomatiza-Discord-5865F2.svg?style=flat" style="max-height: 300px;"></a>
-  <a href="http://x.com/char_automatiza"><img src="https://img.shields.io/badge/@char__automatiza-X-000000.svg?style=flat" style="max-height: 300px;"></a>
-  <a href="https://www.linkedin.com/in/gautocarlos/"><img src="https://img.shields.io/badge/Carlos%20 Gauto-LinkedIn-0077B5.svg" style="max-height: 300px;"></a>
-  <a href="https://charlyautomatiza.tech"><img src="https://img.shields.io/badge/Website-charlyautomatiza.tech-4285F4.svg?style=flat" style="max-height: 300px;"></a>
-  <a href="https://dev.to/charlyautomatiza"><img src="https://img.shields.io/badge/CharlyAutomatiza-DEV.to-0A0A0A.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://www.youtube.com/c/CharlyAutomatiza?sub_confirmation=1"><img alt="YouTube" src="https://img.shields.io/badge/CharlyAutomatiza-Youtube-FF0000.svg" style="max-height: 300px;"></a>
+  <a href="https://discord.gg/wwM9GwxmRZ"><img alt="Discord" src="https://img.shields.io/badge/CharlyAutomatiza-Discord-5865F2.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://x.com/char_automatiza"><img alt="X" src="https://img.shields.io/badge/@char__automatiza-X-000000.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://www.linkedin.com/in/gautocarlos/"><img alt="LinkedIn" src="https://img.shields.io/badge/Carlos%20Gauto-LinkedIn-0077B5.svg" style="max-height: 300px;"></a>
+  <a href="https://charlyautomatiza.tech"><img alt="Website" src="https://img.shields.io/badge/Website-charlyautomatiza.tech-4285F4.svg?style=flat" style="max-height: 300px;"></a>
+  <a href="https://dev.to/charlyautomatiza"><img alt="DEV Community" src="https://img.shields.io/badge/CharlyAutomatiza-DEV.to-0A0A0A.svg?style=flat" style="max-height: 300px;"></a>
   <a href="https://www.instagram.com/charlyautomatiza/"><img alt="Instagram" src="https://img.shields.io/badge/CharlyAutomatiza-Instagram-E4405F.svg?style=flat" style="max-height: 300px;"></a>
   <a href="https://www.twitch.tv/charlyautomatiza"><img alt="Twitch" src="https://img.shields.io/badge/CharlyAutomatiza-Twitch-9146FF.svg" style="max-height: 300px;"></a>
 </p>
@@ -15,7 +15,7 @@
 
 ## 🎯 Overview
 
-This skill enables Claude to plan, generate, and validate k6 performance testing scripts following official best practices. It provides deterministic recommendations, interactive parameter resolution, and comprehensive support for HTTP, gRPC, and browser testing protocols.
+These skills enable Claude to plan, generate, and validate k6 performance testing scripts following official best practices. They provide deterministic recommendations, interactive parameter resolution, and comprehensive support for HTTP, gRPC, and browser testing protocols.
 
 ### Key Features
 
