@@ -25,13 +25,14 @@
   - Acceptable SLA: error rate < 5% (0.05)
 - **Validation rule:** Error threshold should never be > 10% for load tests
 
-### Success Rate / Check Pass Rate
+### Checks Pass Rate (Success Rate)
 - **Metric:** `checks`
 - **Typical ranges:**
   - Aggressive SLA: > 99% (0.99)
   - Standard SLA: > 97% (0.97)
   - Minimum acceptable: > 95% (0.95)
 - **Validation rule:** Should correlate with error rate (inverse relationship)
+- **Terminology rule:** Use **Checks Pass Rate** as canonical term. Treat "success rate" as synonym only when explicitly mapped to `checks`.
 
 ## Threshold Consistency Checks
 
@@ -102,6 +103,11 @@ thresholds: {
 ```
 
 ## Threshold Derivation Rules
+
+Cross-skill coherence rule:
+
+- If thresholds are explicitly derived from approved `k6-plan`/`k6-config` defaults and assumptions are documented, do not raise warning solely because scenario-specific defaults differ.
+- Raise warning only when thresholds are missing, internally inconsistent, or clearly misaligned with stated SLA.
 
 When user doesn't specify thresholds, apply these defaults:
 

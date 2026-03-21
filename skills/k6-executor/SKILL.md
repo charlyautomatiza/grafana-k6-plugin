@@ -21,10 +21,26 @@ At the beginning of the workflow, detect and use interaction tools in this order
 4. Else emit the exact fallback and end the turn:
 
 ```md
-> [?] MISSING REQUIREMENT: [Missing goal or execution constraints]
+> [?] MISSING REQUIREMENT: Missing goal or execution constraints
+required: goal, load-shape constraint, and execution context
+why: deterministic executor recommendation requires all three
+next_question: What is your primary goal and is it rate-controlled or VU-controlled?
 ```
 
 Do not continue recommendation after fallback.
+
+## Interoperability Fallback Contract
+
+When fallback is required, always use this portable payload shape:
+
+```md
+> [?] MISSING REQUIREMENT: <short missing requirement summary>
+required: <comma-separated missing fields>
+why: <why recommendation cannot continue deterministically>
+next_question: <single question that unblocks next step>
+```
+
+Do not emit final recommendation content after this fallback.
 
 ## Language Policy
 
@@ -44,11 +60,28 @@ Always enforce these validations before final recommendation:
    - VU-based executors must include explicit VUs.
    - Arrival-rate executors must include capacity controls (`preAllocatedVUs`, `maxVUs`) and a duration.
    - Iteration-based executors must include explicit `vus` and `iterations`.
+3. **Parameter coherence is required**
+   - Arrival-rate executors must satisfy `preAllocatedVUs <= maxVUs`.
+   - `duration` values must be explicit and valid for time-based executors.
+   - `constant-vus` must include explicit `vus` and `duration`.
+   - `ramping-vus` must include explicit `startVUs` and non-empty `stages`.
+   - `constant-arrival-rate` must include `rate`, `timeUnit`, `duration`, and valid capacity controls (`preAllocatedVUs`, `maxVUs`).
+   - `ramping-arrival-rate` must include `startRate`, `timeUnit`, non-empty `stages`, and valid capacity controls.
+   - `per-vu-iterations` and `shared-iterations` must include explicit `vus` and `iterations`.
+   - `externally-controlled` recommendations must include execution-context assumptions.
+4. **Secrets and runnable safety are required**
+   - Never hard-code credentials or tokens in runnable snippets.
+   - Require environment variables (`__ENV`) when auth or secrets are needed.
 
 ## Decision Tree
 
 <decision-tree>
-Ask user three clarifying questions if `goal` parameter is incomplete:
+Round definition:
+
+- **Round 1 (baseline block)**: ask the three baseline questions as one consolidated block.
+- **Round 2 (tie-break only)**: ask at most one tie-break question if conflict remains.
+
+Ask user the baseline questions if `goal` parameter is incomplete:
 
 1. **Do you need to control VU count or request rate?**
    - VU count → constant-vus or ramping-vus
@@ -61,7 +94,28 @@ Ask user three clarifying questions if `goal` parameter is incomplete:
 3. **Is duration time-based or iteration-based?**
    - Time-based → use duration parameter
    - Iteration-based → per-vu-iterations or shared-iterations
+
+If user requirements conflict (for example strict RPS target and strict VU cap), ask one tie-break question in Round 2:
+
+- "Which is more critical for this run: exact request-rate target or strict virtual-user ceiling?"
 </decision-tree>
+
+## Response Modes
+
+- **Brief mode**: Return a concise version of **all sections required by the Output Contract** (including Guardrail Validation and Next Step), focusing on executor choice, minimal valid config, threshold summary, and dashboard recommendation.
+- **Detailed mode**: Expand on all Output Contract sections with full decision rationale, alternatives, a more thorough guardrail validation table, and explicit assumptions.
+- Default to brief mode when user asks for a quick answer or the request is narrow and unambiguous, but still include every Output Contract section (even if heavily condensed).
+
+## SLA Reconfirmation Rule
+
+When user provides explicit SLA values (latency/error/check targets), do this before final recommendation:
+
+1. Re-state parsed SLA values exactly.
+2. Ask for confirmation once.
+3. Apply confirmed values in thresholds.
+4. If values are technically inconsistent, keep user-provided values and add a short improvement suggestion.
+
+Do not silently replace explicit user SLAs with defaults.
 
 ## Executor Recommendations
 
@@ -170,9 +224,50 @@ Ask user three clarifying questions if `goal` parameter is incomplete:
 
 Apply this gate before final recommendation:
 
-1. If scenario involves browser UX troubleshooting or local interactive analysis, recommend `K6_WEB_DASHBOARD=true`.
-2. If scenario is CI/non-interactive, keep dashboard disabled by default and prefer exported summaries.
-3. State one deterministic dashboard recommendation: `enable` or `disable` with rationale.
+1. If scenario is CI/non-interactive, keep dashboard disabled by default (`K6_WEB_DASHBOARD=false`) and prefer exported summaries.
+2. If scenario involves local interactive browser troubleshooting, recommend `K6_WEB_DASHBOARD=true`.
+3. If scenario is local non-browser, default to disabled (`K6_WEB_DASHBOARD=false`) unless user explicitly asks for interactive monitoring.
+4. For all other cases, default to disabled unless user explicitly asks for interactive local monitoring.
+5. State one deterministic dashboard recommendation: `K6_WEB_DASHBOARD=true` or `K6_WEB_DASHBOARD=false` with rationale.
+
+Always emit a visible section in output:
+
+```md
+## Web Dashboard Recommendation
+K6_WEB_DASHBOARD=true — <short rationale>
+```
+
+Emit the concrete value (`true` or `false`), never the placeholder `<true|false>`. This policy must remain aligned with `k6-config` dashboard controls.
+
+## Output Contract
+
+Every recommendation response must include these sections in order:
+
+1. Executor Recommendation
+2. Configuration (valid k6 options snippet)
+3. Thresholds (confirmed or defaulted)
+4. Guardrail Validation
+5. Web Dashboard Recommendation
+6. Next Step
+
+Guardrail Validation must include executor-specific checks:
+
+- `constant-vus`: explicit `vus` and `duration`
+- `ramping-vus`: explicit `startVUs` and non-empty `stages`
+- `constant-arrival-rate`: explicit `rate`, `timeUnit`, `duration`, and `preAllocatedVUs <= maxVUs`
+- `ramping-arrival-rate`: explicit `startRate`, `timeUnit`, non-empty `stages`, and `preAllocatedVUs <= maxVUs`
+- `per-vu-iterations`: explicit `vus` and `iterations`
+- `shared-iterations`: explicit `vus` and `iterations`
+- `externally-controlled`: explicit `vus`, `maxVUs`, `duration`, execution-context assumption, and documented control workflow
+
+For arrival-rate executors, Guardrail Validation must also include:
+
+- `preAllocatedVUs <= maxVUs` check
+- explicit capacity assumption note
+
+For `externally-controlled`, include one context assumption line:
+
+- "Assumption: execution environment supports external control workflow for this scenario."
 
 ## Complete Configuration Example
 
@@ -208,11 +303,13 @@ Keep this file focused on decision workflow. Place deep guidance in:
 
 ## Workflow
 
-1. Parse user goal and constraints.
-2. Run Tool Discovery Protocol if required inputs are missing.
-3. If ambiguous, ask decision-tree questions.
-4. Map answers to the most appropriate executor.
-5. Validate threshold and load-profile invariants.
-6. Apply Web Dashboard Recommendation Gate.
-7. Provide a deterministic configuration example.
-8. Explain rationale and next steps.
+1. Parse user goal, constraints, and optional SLAs.
+2. Select response mode (brief or detailed).
+3. Run Tool Discovery Protocol if required inputs are missing.
+4. If explicit SLAs are present, apply SLA Reconfirmation Rule.
+5. If ambiguous or conflicting, run decision-tree rounds with the explicit contract (Round 1 baseline, Round 2 tie-break only).
+6. Map answers to the most appropriate executor.
+7. Validate thresholds, load-profile invariants, and parameter coherence.
+8. Apply Web Dashboard Recommendation Gate and emit it visibly.
+9. Provide deterministic configuration example following Output Contract.
+10. Explain rationale and next step.

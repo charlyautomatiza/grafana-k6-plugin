@@ -2,6 +2,13 @@
 
 ## HTTP
 
+### Timeout Coherence Rule
+
+1. Include explicit request timeout for executable HTTP examples (`timeout: '30s'` baseline).
+2. Use stricter values only when SLA requires them and document the rationale.
+3. Missing explicit timeout should be treated as a validation warning in `k6-validate`, not an automatic blocker.
+4. Plan and validation guidance must not contradict: if plan emits explicit timeout, validation should not warn on timeout absence.
+
 ### Method Confirmation Checklist
 
 Before generating executable HTTP scripts:

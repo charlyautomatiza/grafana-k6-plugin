@@ -19,6 +19,13 @@ Complete reference materials for comprehensive k6 performance test planning.
 - HTTP method confirmation and auth discovery for executable plans
 - Deterministic next-step selection from unresolved dependencies
 
+## Terminology Contract
+
+- **Scenario type**: objective shape (`load`, `stress`, `spike`, `soak`, `smoke`) used to select executor strategy.
+- **Profile**: intensity preset (`minimal`, `standard`, `aggressive`) used to derive default `vus` and `duration` when missing.
+- **Round**: one consolidated question block in the same adaptive question system; baseline questions are Round 1 and optional tie-break is Round 2.
+- **Explicit** means user-provided; **derived** means deterministic defaults declared in assumptions.
+
 ## Implementation Rules
 
 1. **Plans must include explicit thresholds** — provided by user or derived from defaults

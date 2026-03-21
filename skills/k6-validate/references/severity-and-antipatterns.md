@@ -24,7 +24,7 @@
 | Scenario | Rule | Severity | Fix |
 |----------|------|----------|-----|
 | No thresholds defined | ERROR | MUST have at least one threshold | Add threshold (e.g., `p95<500`) |
-| Only success checks, no metrics | WARNING | Thresholds define success criteria (MOS - Measure of Success), not just checks | Add latency/availability thresholds |
+| Only Checks Pass Rate threshold, no latency/error metrics | WARNING | Checks alone are insufficient for SLA validation | Add latency and error-rate thresholds |
 | Inconsistent across environments | WARNING | Same test, different thresholds per env | Document environment-specific SLAs |
 | p95 > p99 | ERROR | Invalid percentile relationship (p95 must be ≤ p99) | Swap values or fix percentile order |
 | Error threshold > 5% | WARNING | Too lenient for most SLAs | Tighten error rate threshold |
@@ -48,6 +48,10 @@
 | No authentication headers | WARNING | May not test realistic auth flow | Add bearer tokens or API keys |
 | Batch size > 10 | WARNING | Batch requests might mask individual failures | Reduce batch size or use separate calls |
 | No timeout defined | WARNING | No per-request timeout is defined; behavior falls back to k6 defaults that may not match SLA expectations | Set `timeout: '30s'` or similar |
+
+Timeout coherence note:
+
+- When a script follows approved plan/config guidance and already defines explicit timeouts, timeout warnings must not be emitted.
 
 #### gRPC
 | Scenario | Rule | Severity | Fix |

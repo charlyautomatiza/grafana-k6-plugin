@@ -21,10 +21,26 @@ At the beginning of the workflow, detect and use interaction tools in this order
 4. Else emit the exact fallback and end the turn:
 
 ```md
-> [?] MISSING REQUIREMENT: [Missing script path or validation scope]
+> [?] MISSING REQUIREMENT: Missing script path or validation scope
+required: script path and validation scope (protocol or expected profile)
+why: deterministic validation report cannot run without target and scope
+next_question: Which script should be validated and what protocol/profile context applies?
 ```
 
 Do not continue validation after fallback.
+
+## Interoperability Fallback Contract
+
+When fallback is required, always use this portable payload shape:
+
+```md
+> [?] MISSING REQUIREMENT: <short missing requirement summary>
+required: <comma-separated missing fields>
+why: <why validation cannot continue deterministically>
+next_question: <single question that unblocks next step>
+```
+
+Do not emit final validation findings after this fallback.
 
 ## Language Policy
 
@@ -72,6 +88,23 @@ Always enforce these validations as mandatory checks:
 2. **Load profile is required**
    - Flag as error when no explicit load profile exists.
    - Require explicit `vus` and `duration` for time-based cases, or clear equivalent (`stages`, `iterations` + `vus`) for scenario-based definitions.
+3. **Parameter coherence is required**
+   - If arrival-rate parameters exist, validate `preAllocatedVUs <= maxVUs`.
+   - If staged scenarios exist, validate non-empty stages with explicit duration per stage.
+4. **Secrets and runnable safety are required**
+   - Flag hard-coded credentials/tokens as error.
+   - Flag insecure runnable defaults for secrets as error or warning based on impact.
+
+## Output Contract
+
+Every validation response must include these sections in order:
+
+1. Validation Summary (`pass`/`warn`/`fail`)
+2. Scope and Assumptions
+3. Mandatory Invariant Results
+4. Detailed Findings
+5. Suggested Fixes
+6. Next Step
 
 ## Progressive Disclosure
 
@@ -87,4 +120,4 @@ Keep this file focused on validation workflow. Place deep guidance in:
 4. Validate performance best practices and protocol-specific rules.
 5. Enforce required threshold and load-profile invariants.
 6. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals).
-7. Return deterministic report with pass/warn/fail, findings, and fixes.
+7. Return deterministic report using the Output Contract section order.

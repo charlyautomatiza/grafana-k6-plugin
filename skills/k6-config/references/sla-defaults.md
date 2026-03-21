@@ -84,7 +84,9 @@ Output:
 }
 ```
 
-> **Note on p99 inference:** `p99 = p95 * 1.8` is an empirical heuristic, not an official k6 rule. Use measured p99 values from representative environments whenever possible.
+> **IMPORTANT: Note on p99 Inference:** The `p99 = p95 * 1.8` formula is an empirical heuristic based on common latency distributions. This is not an official k6 standard and must not be treated as universally valid.
+>
+> Use this approximation only as an initial baseline when real p99 measurements are unavailable. Replace it with measured p99 values from representative environments (staging or production-like) before final SLA sign-off.
 
 ## Protocol-Specific Metrics
 
