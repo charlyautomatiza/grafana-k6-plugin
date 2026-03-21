@@ -21,10 +21,26 @@ At the beginning of the workflow, detect and use interaction tools in this order
 4. Else emit the exact fallback and end the turn:
 
 ```md
-> [?] MISSING REQUIREMENT: [Missing target, scenario, or SLA detail]
+> [?] MISSING REQUIREMENT: Missing target, scenario, or SLA detail
+required: target, scenario type, and SLA requirements
+why: deterministic planning cannot proceed without baseline planning inputs
+next_question: What target endpoint, scenario type, and SLA should this plan use?
 ```
 
 Do not continue plan generation after fallback.
+
+## Interoperability Fallback Contract
+
+When fallback is required, always use this portable payload shape:
+
+```md
+> [?] MISSING REQUIREMENT: <short missing requirement summary>
+required: <comma-separated missing fields>
+why: <why plan generation cannot continue deterministically>
+next_question: <single question that unblocks next step>
+```
+
+Do not emit final plan content after this fallback.
 
 ## Core Rules
 
@@ -58,6 +74,12 @@ Do not continue plan generation after fallback.
 
 5. **Determinism**: Same inputs produce identical outputs every time.
 </rules>
+
+## Terminology Contract
+
+- **Scenario type** means the test objective shape (`load`, `stress`, `spike`, `soak`, `smoke`).
+- **Profile** means default intensity presets (`minimal`, `standard`, `aggressive`) used when explicit `vus`/`duration` are missing.
+- Scenario type selects the executor strategy; profile sets default intensity values.
 
 ## Language Policy
 
@@ -96,6 +118,24 @@ Always enforce these validations before returning the plan:
    - Do not generate runnable scripts with fixed live target URLs.
    - Require `__ENV.BASE_URL` (or equivalent) for executable output.
    - If target is missing, ask for it instead of using a default live URL.
+4. **Parameter coherence is required**
+   - Derived or explicit profile values must map to explicit `vus` and `duration`, or explicit staged equivalents.
+   - If write methods are planned (`POST`/`PUT`/`PATCH`), payload assumptions and expected status must be explicit.
+5. **Secrets and runnable safety are required**
+   - Never hard-code credentials or tokens in runnable snippets.
+   - Require environment variables (`__ENV`) for auth inputs.
+
+## Output Contract
+
+Every response must include these sections in order:
+
+1. Planning Inputs Summary
+2. Executor Recommendation
+3. Load Profile (explicit or derived)
+4. Thresholds (SLA-derived or defaults)
+5. Protocol-Specific Notes
+6. Assumptions
+7. Next recommended step
 
 ## Scenario to Executor Mapping
 
@@ -183,6 +223,7 @@ When user invokes this skill:
 9. Parse SLA thresholds or apply deterministic defaults.
 10. Validate explicit or derived VUs and duration.
 11. Generate textual plan with recommendations.
-12. Add exactly one deterministic `Next recommended step` based on first unresolved dependency.
-13. If `output=script` or user explicitly requests code, generate complete k6 JavaScript.
-14. Return the plan and assumptions summary.
+12. Validate output structure using the Output Contract section order.
+13. Add exactly one deterministic `Next recommended step` based on first unresolved dependency.
+14. If `output=script` or user explicitly requests code, generate complete k6 JavaScript.
+15. Return the plan and assumptions summary.

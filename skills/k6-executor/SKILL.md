@@ -21,10 +21,26 @@ At the beginning of the workflow, detect and use interaction tools in this order
 4. Else emit the exact fallback and end the turn:
 
 ```md
-> [?] MISSING REQUIREMENT: [Missing goal or execution constraints]
+> [?] MISSING REQUIREMENT: Missing goal or execution constraints
+required: goal, load-shape constraint, and execution context
+why: deterministic executor recommendation requires all three
+next_question: What is your primary goal and is it rate-controlled or VU-controlled?
 ```
 
 Do not continue recommendation after fallback.
+
+## Interoperability Fallback Contract
+
+When fallback is required, always use this portable payload shape:
+
+```md
+> [?] MISSING REQUIREMENT: <short missing requirement summary>
+required: <comma-separated missing fields>
+why: <why recommendation cannot continue deterministically>
+next_question: <single question that unblocks next step>
+```
+
+Do not emit final recommendation content after this fallback.
 
 ## Language Policy
 
@@ -47,12 +63,24 @@ Always enforce these validations before final recommendation:
 3. **Parameter coherence is required**
    - Arrival-rate executors must satisfy `preAllocatedVUs <= maxVUs`.
    - `duration` values must be explicit and valid for time-based executors.
+  - `constant-vus` must include explicit `vus` and `duration`.
+  - `ramping-vus` must include explicit `startVUs` and non-empty `stages`.
+  - `ramping-arrival-rate` must include `startRate`, `timeUnit`, non-empty `stages`, and valid capacity controls.
+  - `per-vu-iterations` and `shared-iterations` must include explicit `vus` and `iterations`.
    - `externally-controlled` recommendations must include execution-context assumptions.
+4. **Secrets and runnable safety are required**
+  - Never hard-code credentials or tokens in runnable snippets.
+  - Require environment variables (`__ENV`) when auth or secrets are needed.
 
 ## Decision Tree
 
 <decision-tree>
-Ask user three clarifying questions if `goal` parameter is incomplete:
+Round definition:
+
+- **Round 1 (baseline block)**: ask the three baseline questions as one consolidated block.
+- **Round 2 (tie-break only)**: ask at most one tie-break question if conflict remains.
+
+Ask user the baseline questions if `goal` parameter is incomplete:
 
 1. **Do you need to control VU count or request rate?**
    - VU count → constant-vus or ramping-vus
@@ -66,7 +94,7 @@ Ask user three clarifying questions if `goal` parameter is incomplete:
    - Time-based → use duration parameter
    - Iteration-based → per-vu-iterations or shared-iterations
 
-If user requirements conflict (for example strict RPS target and strict VU cap), ask one tie-break question:
+If user requirements conflict (for example strict RPS target and strict VU cap), ask one tie-break question in Round 2:
 
 - "Which is more critical for this run: exact request-rate target or strict virtual-user ceiling?"
 </decision-tree>
@@ -195,10 +223,11 @@ Do not silently replace explicit user SLAs with defaults.
 
 Apply this gate before final recommendation:
 
-1. If scenario involves browser UX troubleshooting or local interactive analysis, recommend `K6_WEB_DASHBOARD=true`.
-2. If scenario is CI/non-interactive, keep dashboard disabled by default and prefer exported summaries.
-3. For all other cases, default to disabled unless user explicitly asks for interactive local monitoring.
-4. State one deterministic dashboard recommendation: `K6_WEB_DASHBOARD=true` or `K6_WEB_DASHBOARD=false` with rationale.
+1. If scenario is CI/non-interactive, keep dashboard disabled by default (`K6_WEB_DASHBOARD=false`) and prefer exported summaries.
+2. If scenario involves local interactive browser troubleshooting, recommend `K6_WEB_DASHBOARD=true`.
+3. If scenario is local non-browser, default to disabled (`K6_WEB_DASHBOARD=false`) unless user explicitly asks for interactive monitoring.
+4. For all other cases, default to disabled unless user explicitly asks for interactive local monitoring.
+5. State one deterministic dashboard recommendation: `K6_WEB_DASHBOARD=true` or `K6_WEB_DASHBOARD=false` with rationale.
 
 Always emit a visible section in output:
 
@@ -220,7 +249,17 @@ Every recommendation response must include these sections in order:
 5. Web Dashboard Recommendation
 6. Next Step
 
-For arrival-rate executors, Guardrail Validation must include:
+Guardrail Validation must include executor-specific checks:
+
+- `constant-vus`: explicit `vus` and `duration`
+- `ramping-vus`: explicit `startVUs` and non-empty `stages`
+- `constant-arrival-rate`: explicit `rate`, `timeUnit`, `duration`, and `preAllocatedVUs <= maxVUs`
+- `ramping-arrival-rate`: explicit `startRate`, `timeUnit`, non-empty `stages`, and `preAllocatedVUs <= maxVUs`
+- `per-vu-iterations`: explicit `vus` and `iterations`
+- `shared-iterations`: explicit `vus` and `iterations`
+- `externally-controlled`: explicit `vus`, `maxVUs`, `duration`, execution-context assumption, and documented control workflow
+
+For arrival-rate executors, Guardrail Validation must also include:
 
 - `preAllocatedVUs <= maxVUs` check
 - explicit capacity assumption note
@@ -267,7 +306,7 @@ Keep this file focused on decision workflow. Place deep guidance in:
 2. Select response mode (brief or detailed).
 3. Run Tool Discovery Protocol if required inputs are missing.
 4. If explicit SLAs are present, apply SLA Reconfirmation Rule.
-5. If ambiguous or conflicting, ask decision-tree questions (max two rounds).
+5. If ambiguous or conflicting, run decision-tree rounds with the explicit contract (Round 1 baseline, Round 2 tie-break only).
 6. Map answers to the most appropriate executor.
 7. Validate thresholds, load-profile invariants, and parameter coherence.
 8. Apply Web Dashboard Recommendation Gate and emit it visibly.

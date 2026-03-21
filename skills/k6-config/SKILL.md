@@ -21,10 +21,26 @@ At the beginning of the workflow, detect and use interaction tools in this order
 4. Else emit the exact fallback and end the turn:
 
 ```md
-> [?] MISSING REQUIREMENT: [Missing required configuration detail]
+> [?] MISSING REQUIREMENT: Missing required configuration detail
+required: environment set, load profile inputs, and SLA target
+why: deterministic multi-environment config cannot be generated safely
+next_question: Which environments should be generated (dev/staging/prod) and what SLA should apply?
 ```
 
 Do not continue generation after fallback.
+
+## Interoperability Fallback Contract
+
+When fallback is required, always use this portable payload shape:
+
+```md
+> [?] MISSING REQUIREMENT: <short missing requirement summary>
+required: <comma-separated missing fields>
+why: <why generation cannot continue deterministically>
+next_question: <single question that unblocks next step>
+```
+
+Do not emit final configuration output after this fallback.
 
 ## Language Policy
 
@@ -42,6 +58,12 @@ Always enforce these validations before returning configuration output:
 2. **Load profile is required**
    - Every generated environment config must include explicit `vus` and `duration`.
    - If missing, derive defaults per environment and state derivation logic.
+3. **Parameter coherence is required**
+   - If arrival-rate style parameters are included, enforce `preAllocatedVUs <= maxVUs`.
+   - If `stages` are used, ensure stage durations are explicit and non-empty.
+4. **Secrets and runnable safety are required**
+   - Never hard-code credentials or tokens in runnable examples.
+   - Require environment-variable placeholders (`__ENV` or `.env.example`) for secrets.
 
 ## Configuration Patterns
 
@@ -73,6 +95,25 @@ Generate separate configs for dev/staging/prod with environment-specific:
 - `k6-config` applies environment-level policy (dev/staging/prod) and operational defaults.
 - If both are used, `k6-config` must preserve executor recommendation intent while enforcing environment safety defaults.
 
+Dashboard precedence order shared with `k6-executor`:
+
+1. CI/non-interactive contexts default to `K6_WEB_DASHBOARD=false` unless user explicitly opts in.
+2. Local interactive browser troubleshooting defaults to `K6_WEB_DASHBOARD=true`.
+3. Local non-browser runs default to `K6_WEB_DASHBOARD=false` unless user explicitly opts in.
+4. All other contexts default to `K6_WEB_DASHBOARD=false`.
+
+## Output Contract
+
+Every response must include these sections in order:
+
+1. Environment Matrix
+2. Configuration Snippets (by environment)
+3. Thresholds (provided or derived)
+4. Load Profile (explicit `vus`/`duration` or staged equivalent)
+5. Guardrail Validation
+6. Web Dashboard Policy
+7. Assumptions and Next Step
+
 ## Progressive Disclosure
 
 Keep this file focused on execution workflow. Place deep guidance in:
@@ -85,6 +126,7 @@ Keep this file focused on execution workflow. Place deep guidance in:
 2. Run Tool Discovery Protocol if critical input is missing.
 3. Validate or derive thresholds for each environment.
 4. Validate or derive `vus` and `duration` for each environment.
-5. Determine per-environment dashboard policy (`enable` only when explicitly requested for local analysis, or when the scenario requires browser UX troubleshooting differential analysis), aligned with `k6-executor` gate semantics.
+5. Determine per-environment dashboard policy using shared precedence with `k6-executor` (CI/headless first, local-browser second, default false otherwise).
 6. Generate deterministic config output and `.env.example` guidance, explicitly warning that real env files and generated reports must remain uncommitted.
-7. Include a short summary of derived assumptions.
+7. Validate guardrails and return output using the Output Contract section order.
+8. Include a short summary of derived assumptions.

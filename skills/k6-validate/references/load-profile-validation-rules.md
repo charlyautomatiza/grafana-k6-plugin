@@ -190,8 +190,9 @@ stages: [
 - **Behavior:** Iterations split across VUs
 
 ### externally-controlled
-- **Required:** None (controlled via k6 REST API)
-- **Typical:** REST calls to set VUs and runState
+- **Required:** Explicit `vus`, `maxVUs`, `duration`, and execution-context assumption (control workflow documented externally)
+- **Typical:** REST calls to set VUs and runState post-initialization
+- **Note:** Aligns with k6-executor guardrail requiring explicit baseline parameters and documented external control context
 
 ## Edge Cases
 
