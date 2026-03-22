@@ -1,6 +1,6 @@
 ---
 name: k6-plan
-description: Plan deterministic k6 performance tests from goals, SLA, and protocol context. Use when users ask to plan a load test, set up a stress/spike/soak strategy, or request a full k6 test blueprint.
+description: Plan deterministic k6 performance tests from goals, SLA, and protocol context. Use when users ask to plan a load test, set up a stress/spike/soak strategy, or request a full k6 test blueprint. Route implementation output requests to k6-builder.
 user-invocable: true
 disable-model-invocation: false
 license: MIT
@@ -21,10 +21,10 @@ At the beginning of the workflow, detect and use interaction tools in this order
 4. Else emit the exact fallback and end the turn:
 
 ```md
-> [?] MISSING REQUIREMENT: Missing target, scenario, or SLA detail
-required: target, scenario type, and SLA requirements
+> [?] MISSING REQUIREMENT: Missing target, scenario, SLA, or protocol detail
+required: target, scenario type, SLA requirements, and protocol
 why: deterministic planning cannot proceed without baseline planning inputs
-next_question: What target endpoint, scenario type, and SLA should this plan use?
+next_question: What target endpoint, scenario type, SLA, and protocol should this plan use?
 ```
 
 Do not continue plan generation after fallback.
@@ -45,16 +45,22 @@ Do not emit final plan content after this fallback.
 ## Core Rules
 
 <rules>
-1. **Adaptive Question System**: When critical parameters are missing, start with the three baseline planning questions and continue in the same question flow with any additional required questions:
+1. **Adaptive Question System**: When critical parameters are missing, start with the baseline planning questions and continue in the same question flow with any additional required questions:
    - What is the target URL/endpoint? (if `target` missing)
    - What scenario type do you need? Options: load, stress, spike, soak, smoke (if `scenario` missing)
    - What are your SLA requirements? Example: p95<500ms,error<1% (if `sla` missing)
+   - What protocol should this test use? Options: http, grpc, browser (if `protocol` missing)
+
+   Round contract:
+   - **Round 1**: one consolidated baseline question block with all minimum required questions.
+   - **Round 2**: one optional tie-break block only when a critical ambiguity remains after Round 1.
+   - If required inputs are still unresolved after Round 2, emit the interoperability fallback and end the turn.
 
    Additional questions must be integrated into the same question system, not handled as a separate side flow:
    - Add an HTTP method question when `protocol=http` and the method cannot be inferred safely.
    - Add one or more authentication questions when auth is required or unknown and executable output depends on it.
-   - Add more questions when other critical ambiguities or missing requirements are detected.
-   - Do not finalize the plan or script until all required questions from this same system are resolved.
+   - Add more questions only inside Round 1 or the single Round 2 tie-break block when other critical ambiguities or missing requirements are detected.
+   - Do not finalize the plan or builder handoff until all required questions from this same system are resolved.
 
 2. **Load Profile Defaults** (when `profile` is not specified):
    - `minimal`: 5 VUs, 1m duration, smoke testing
@@ -70,15 +76,14 @@ Do not emit final plan content after this fallback.
    - Data integration suggestions (CSV/JSON)
    - Exactly one deterministic `Next recommended step`
 
-4. **Script Generation** (optional): Only generate k6 script code when user explicitly requests `output=script` or clearly asks for executable code.
-
-5. **Determinism**: Same inputs produce identical outputs every time.
+4. **Determinism**: Same inputs produce identical outputs every time.
 </rules>
 
 ## Terminology Contract
 
 - **Scenario type** means the test objective shape (`load`, `stress`, `spike`, `soak`, `smoke`).
 - **Profile** means default intensity presets (`minimal`, `standard`, `aggressive`) used when explicit `vus`/`duration` are missing.
+- **Round** means one consolidated question block in the adaptive question system; baseline questions are Round 1 and the optional tie-break is Round 2.
 - Scenario type selects the executor strategy; profile sets default intensity values.
 
 ## Language Policy
@@ -97,7 +102,7 @@ Before producing a final HTTP plan, add the method question to the same active q
 
 ## Auth Discovery Questions
 
-Before finalizing plan or script output, add auth questions to the same active question system:
+Before finalizing plan output or builder handoff parameters, add auth questions to the same active question system:
 
 1. Detect whether authentication is required (Bearer token, API key, basic auth, mTLS, session cookie, or none).
 2. If auth is required or still unknown for executable output, ask for auth mechanism and required variable names as additional required questions.
@@ -214,7 +219,7 @@ When user invokes this skill:
 
 1. Parse provided parameters (`target`, `scenario`, `sla`, `profile`, `protocol`, `duration`, `vus`, `output`).
 2. Run Tool Discovery Protocol when critical inputs are missing.
-3. Start the Adaptive Question System with the three baseline planning questions when `target`, `scenario`, or `sla` are missing.
+3. Start the Adaptive Question System with baseline questions when `target`, `scenario`, `sla`, or `protocol` are missing.
 4. Apply load profile defaults based on `profile`.
 5. Add an HTTP method question to the same question system when protocol is HTTP and the method is still ambiguous.
 6. Add auth questions to the same question system when auth is required, unknown, or otherwise blocks executable output.
@@ -225,5 +230,5 @@ When user invokes this skill:
 11. Generate textual plan with recommendations.
 12. Validate output structure using the Output Contract section order.
 13. Add exactly one deterministic `Next recommended step` based on first unresolved dependency.
-14. If `output=script` or user explicitly requests code, generate complete k6 JavaScript.
+14. If `output=script` or user explicitly requests runnable code, route to k6-builder with accumulated plan parameters (`target`, `scenario`, `sla`, `protocol`, `profile`, `method`, `auth`, `duration`, `vus`).
 15. Return the plan and assumptions summary.

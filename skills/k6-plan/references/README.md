@@ -34,7 +34,7 @@ Complete reference materials for comprehensive k6 performance test planning.
 4. **All assumptions must be listed** in output when defaults are applied
 5. **Each plan includes executor recommendation** with explicit rationale
 6. **Runnable URL hard-coding is forbidden** in executable output; require `__ENV.BASE_URL` style variables
-7. **Auth discovery is mandatory** before final script generation when auth requirements are uncertain
+7. **Auth discovery is mandatory** before final handoff to k6-builder when auth requirements are uncertain
 
 ## HTTP Planning Requirements
 
@@ -47,7 +47,7 @@ Before finalizing an HTTP plan:
 
 ## Auth Discovery Requirements
 
-Before finalizing a plan or script:
+Before finalizing a plan and handoff recommendations:
 
 1. Determine auth mode: none, bearer token, API key, basic auth, session cookie, or mTLS.
 2. Declare required environment variables explicitly.
@@ -61,7 +61,7 @@ Every final plan must contain exactly one `Next recommended step` chosen by this
 2. Missing SLA
 3. Missing auth details
 4. Missing data source definition
-5. Generate script (`output=script`) and run dry validation
+5. Handoff to k6-builder for runnable artifact generation
 
 ## Decision Criteria
 

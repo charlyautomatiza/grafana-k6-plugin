@@ -22,9 +22,9 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 ```md
 > [?] MISSING REQUIREMENT: Missing script path or validation scope
-required: script path and validation scope (protocol or expected profile)
+required: script path and validation scope (protocol, scenario type, or profile)
 why: deterministic validation report cannot run without target and scope
-next_question: Which script should be validated and what protocol/profile context applies?
+next_question: Which script should be validated and what protocol, scenario type, or profile context applies?
 ```
 
 Do not continue validation after fallback.
@@ -47,6 +47,13 @@ Do not emit final validation findings after this fallback.
 1. If user language is explicit, answer in that language.
 2. If language is not explicit, default to English.
 3. Keep command names, k6 metric keys, and code identifiers in English.
+
+## Terminology Contract
+
+- **Scenario type** means the test objective shape (`load`, `stress`, `spike`, `soak`, `smoke`) used to select executor intent.
+- **Profile** means the expected intensity preset (`minimal`, `standard`, `aggressive`) used to evaluate whether `vus`, `duration`, and thresholds fit the intended load level.
+- **Recommended profile** in validation references is advisory mapping from scenario type to default intensity, not a replacement for explicit user-provided values.
+- When both scenario type and profile are provided, validate executor fit against scenario type first and threshold/load intensity fit against profile second.
 
 ## Validation Rules
 
@@ -126,7 +133,7 @@ Keep this file focused on validation workflow. Place deep guidance in:
 
 ## Workflow
 
-1. Parse validation target (`script`) and optional context (`protocol`, `sla`, expected profile).
+1. Parse validation target (`script`) and optional context (`protocol`, `sla`, scenario type, profile).
 2. Run Tool Discovery Protocol if required input is missing.
 3. Validate syntax and structure.
 4. Validate performance best practices and protocol-specific rules.

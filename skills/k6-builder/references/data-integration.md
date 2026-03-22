@@ -70,6 +70,31 @@ export default function () {
 }
 ```
 
+## Auth Discovery and Data Contracts
+
+Before generating executable scripts with request data:
+
+1. Confirm whether auth fields are present in the selected dataset.
+2. Validate required keys for the selected method (for example, ID for `GET`, payload fields for `POST`).
+3. Fail fast with clear errors when required fields are missing.
+4. Keep secrets in `__ENV`; never store them in CSV/JSON fixtures.
+5. If environment setup is documented, use a committed `.env.example` with placeholders only.
+6. Do not recommend committing real `.env` files or generated reports.
+
+## Safe Parsing Pattern
+
+Use guarded parsing for dynamic JSON payloads:
+
+```javascript
+function parseJsonOrFail(raw, sourceName) {
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`Invalid JSON in ${sourceName}: ${err.message}`);
+  }
+}
+```
+
 ## Recommendation Logic
 
 | Scenario | Data Type | Rationale |

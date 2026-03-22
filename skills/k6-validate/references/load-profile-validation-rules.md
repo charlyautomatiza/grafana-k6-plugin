@@ -124,6 +124,10 @@ export const options = {
 
 ## Scenario-to-Profile Mapping
 
+Terminology note:
+- **Scenario** means the test objective shape (`load`, `stress`, `spike`, `soak`, `smoke`).
+- **Recommended Profile** means the default intensity preset to compare against when no explicit profile is provided.
+
 | Scenario | Recommended Profile | VU Range | Duration | Executor |
 |----------|-------------------|----------|----------|----------|
 | smoke | minimal | 5 | 1m | constant-vus |
