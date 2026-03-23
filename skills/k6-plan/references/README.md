@@ -36,6 +36,26 @@ Complete reference materials for comprehensive k6 performance test planning.
 6. **Runnable URL hard-coding is forbidden** in executable output; require `__ENV.BASE_URL` style variables
 7. **Auth discovery is mandatory** before final handoff to k6-builder when auth requirements are uncertain
 
+## Clarification Contract (Minimal)
+
+When clarification is required (and provisional plan policy does not apply), return only:
+
+```text
+missing: <comma-separated list of missing fields>
+why: <one sentence explaining why these fields are required>
+next_question: <single question that unblocks the next step>
+```
+
+Rules:
+- Use exactly these three fields.
+- Do not include partial plan fragments in clarification output.
+- Ask only one next question, even if multiple fields are missing.
+
+## Provisional Plan Guardrail
+
+- If core test shape is clear but `target` or `sla` is missing, generate a provisional plan with `[assumption-based]` labels.
+- Always include `pending_questions` listing each assumption and why it is needed.
+
 ## HTTP Planning Requirements
 
 Before finalizing an HTTP plan:

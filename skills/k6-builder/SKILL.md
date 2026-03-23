@@ -128,7 +128,7 @@ Then:
 1. Build a minimal internal plan
 2. Expose assumptions
 3. Generate runnable artifacts
-4. Recommend optional `k6-validate` run
+4. Include a mandatory `k6-validate` handoff block with one suggested validation command
 
 ## Language Policy
 
@@ -268,7 +268,8 @@ Every response must include these sections in order:
 7. Guardrail Validation — include this checklist at minimum:
    - [ ] Default export function is named (not anonymous)
 8. Assumptions
-9. Next recommended step
+9. Validation Handoff (required) — include one runnable command for `k6-validate`
+10. Next recommended step
 
 ## Runnable Artifact Rules
 

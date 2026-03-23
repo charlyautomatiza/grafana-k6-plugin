@@ -34,6 +34,15 @@ Each finding includes:
 - **Remediation** — Code example showing the fix
 - **Why** — Brief explanation of the impact
 
+## Output Contract Alignment
+
+Validation output must stay deterministic and compact:
+
+- Use Markdown artifact name: `validation-report.md`
+- Keep section order aligned with `skills/k6-validate/SKILL.md`
+- Use a compact findings table with columns: `#`, `Severity`, `Finding`, `Recommended Fix`
+- Ensure every finding has severity + at least one actionable fix snippet in `Suggested Fixes`
+
 ## Scripted Validation Procedures
 
 See [testing-guide.md](testing-guide.md) for:

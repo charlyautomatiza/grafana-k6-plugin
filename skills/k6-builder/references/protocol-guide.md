@@ -28,7 +28,7 @@ if (!BASE_URL) {
   throw new Error('BASE_URL environment variable is required');
 }
 
-export default function () {
+export default function runHttpGetUsers() {
   const response = http.get(`${BASE_URL}/users`, {
     timeout: '30s',
     tags: { name: 'get-users' },
@@ -51,7 +51,7 @@ if (!BASE_URL) {
   throw new Error('BASE_URL environment variable is required');
 }
 
-export default function () {
+export default function runHttpBatchRequests() {
   const responses = http.batch([
     ['GET', `${BASE_URL}/users`],
     ['GET', `${BASE_URL}/products`],
@@ -84,7 +84,7 @@ if (!BASE_URL || !API_USER || !API_PASSWORD) {
   throw new Error('BASE_URL, API_USER, and API_PASSWORD environment variables are required');
 }
 
-export default function () {
+export default function runHttpLoginFlow() {
   const payload = JSON.stringify({
     username: API_USER,
     password: API_PASSWORD,
@@ -127,7 +127,7 @@ if (!BASE_URL || !API_TOKEN) {
   throw new Error('BASE_URL and API_TOKEN environment variables are required');
 }
 
-export default function () {
+export default function runHttpAuthenticatedPost() {
   const payload = JSON.stringify({ item: 'test' });
 
   const params = {
@@ -159,7 +159,7 @@ if (!GRPC_ADDR) {
 const client = new grpc.Client();
 client.load(['definitions'], 'service.proto');
 
-export default function () {
+export default function runGrpcUnaryCall() {
   client.connect(GRPC_ADDR, {
     plaintext: false,
   });
@@ -198,7 +198,7 @@ if (!BASE_URL || !UI_USER || !UI_PASSWORD) {
   throw new Error('BASE_URL, UI_USER, and UI_PASSWORD environment variables are required');
 }
 
-export default async function () {
+export default async function runBrowserLoginJourney() {
   const context = await browser.newContext();
   const page = await context.newPage();
   
@@ -224,6 +224,7 @@ export default async function () {
 ### Collecting Web Vitals
 ```javascript
 import { browser } from 'k6/browser';
+import { check } from 'k6';
 
 const BASE_URL = __ENV.BASE_URL;
 
@@ -231,7 +232,7 @@ if (!BASE_URL) {
   throw new Error('BASE_URL environment variable is required');
 }
 
-export default async function () {
+export default async function runBrowserVitalsProbe() {
   const context = await browser.newContext();
   const page = await context.newPage();
   
@@ -243,7 +244,9 @@ export default async function () {
       return entry ? entry.startTime : null;
     });
     
-    console.log(`First Contentful Paint: ${fcp}ms`);
+    check({ fcp }, {
+      'fcp captured': (m) => m.fcp !== null,
+    });
   } finally {
     await page.close();
     await context.close();

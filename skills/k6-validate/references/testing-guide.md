@@ -13,7 +13,7 @@ export const options = {
   duration: '1m',
 };
 
-export default function () {}
+export default function runThresholdlessCase() {}
 ```
 
 Expected result:
@@ -31,7 +31,7 @@ export const options = {
   },
 };
 
-export default function () {}
+export default function runLoadProfileMissingCase() {}
 ```
 
 Expected result:
@@ -53,7 +53,7 @@ export const options = {
   },
 };
 
-export default function () {}
+export default function runHardcodedSecretCase() {}
 ```
 
 Expected result:
