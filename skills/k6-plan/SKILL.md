@@ -56,6 +56,11 @@ Do not emit final plan content after this fallback.
    - **Round 2**: one optional tie-break block only when a critical ambiguity remains after Round 1.
    - If required inputs are still unresolved after Round 2, emit the interoperability fallback and end the turn.
 
+   **Provisional plan policy:**
+   - If `target` or `sla` is missing but the scenario type is clear (e.g., stress test with explicit VU target), generate a provisional plan with `[assumption-based]` annotations for all missing values.
+   - A provisional plan must use profile defaults for SLA thresholds, label each assumed value explicitly, and append a `pending_questions` block listing what was assumed and why.
+   - A provisional plan is always preferable to a hard stop when the core test shape is clear.
+
    Additional questions must be integrated into the same question system, not handled as a separate side flow:
    - Add an HTTP method question when `protocol=http` and the method cannot be inferred safely.
    - Add one or more authentication questions when auth is required or unknown and executable output depends on it.
@@ -109,6 +114,22 @@ Before finalizing plan output or builder handoff parameters, add auth questions 
 3. Never hard-code credentials in examples or generated scripts.
 4. Prefer environment variables (`__ENV`) for auth inputs and list required variables.
 
+## Clarification Output Contract
+
+When required inputs are missing and a clarification response is needed (not a provisional plan), use this exact format and nothing else:
+
+```
+missing: <comma-separated list of missing fields>
+why: <one sentence explaining why these fields are required to proceed>
+next_question: <single, specific question that unblocks the next step>
+```
+
+Rules:
+- Use exactly these three fields — no additions, no removals.
+- Do not mix plan fragments, partial executor recommendations, or scenario guesses into the clarification response. The clarification block must be self-contained.
+- If multiple fields are missing, list them all in `missing` but ask only the single most-blocking question in `next_question`.
+- After emitting the clarification block, end the response. Do not add caveats or partial analysis below it.
+
 ## Required k6 Invariants
 
 Always enforce these validations before returning the plan:
@@ -129,6 +150,12 @@ Always enforce these validations before returning the plan:
 5. **Secrets and runnable safety are required**
    - Never hard-code credentials or tokens in runnable snippets.
    - Require environment variables (`__ENV`) for auth inputs.
+
+6. **Protocol-specific technical quality is required**
+   - gRPC plans must always include: `grpc_req_duration` metric, `client.connect()` in setup or default, and `client.close()` in teardown. Omitting any of these from a gRPC plan is a planning error.
+   - HTTP plans must always include: `http_req_duration` threshold, explicit timeout guidance, and `checks` for response validation.
+   - Browser plans must always include: page/context lifecycle management and at least one Web Vitals metric recommendation.
+   - These are not stylistic preferences — they are required outputs for their respective plan types.
 
 ## Output Contract
 

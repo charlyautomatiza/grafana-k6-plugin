@@ -67,6 +67,11 @@ Do not emit final artifact content after this fallback.
    - **Round 2**: one optional tie-break block only when a critical ambiguity remains after Round 1.
    - If required inputs are still unresolved after Round 2, emit the interoperability fallback and end the turn.
 
+   **Partial template override for multi-environment requests:**
+   - If `target` or `protocol` is missing but the request clearly specifies multiple environments and a scenario, generate a partial script template with `__ENV` placeholders for all missing values.
+   - Mark each assumption with `[assumption-based]` in a `pending_questions` block appended at the end of the artifact.
+   - The partial template must still satisfy all other invariants (named function, thresholds, load profile via defaults).
+
    Additional questions must be integrated into the same question system, not handled as a separate side flow:
    - Add an HTTP method question when `protocol=http` and the method cannot be inferred safely.
    - Add one or more authentication questions when auth is required or unknown and executable output depends on it.
@@ -150,6 +155,10 @@ Always enforce these validations before returning output:
 5. **Multi-environment coherence is required**
    - For `dev/staging/prod`, validate `dev <= staging <= prod` for VU progression.
    - Emit `WARNING` if user override violates progression without explicit justification.
+6. **Named default function is required**
+   - The `export default function` must always have a name derived from the active scenario and protocol.
+   - Naming convention: `run<Protocol><ScenarioType>` — example: `runHttpLoad`, `runGrpcStress`, `runBrowserSmoke`.
+   - If scenario or protocol is not resolved yet, use a generic but named function: `runPerfTest`.
 
 ## Builder Decision Rules
 
@@ -171,6 +180,16 @@ If user explicitly requires rate control, prioritize:
 
 If user asks for exact iteration accounting:
 - `per-vu-iterations` or `shared-iterations`
+
+### Multi-Environment Differentiation Rules
+
+When building multi-environment outputs (dev/staging/prod), apply mandatory differentiation:
+
+1. **VU counts must differ explicitly** across environments — never use identical values. Baseline pattern: dev ≤ staging ≤ prod.
+2. **Thresholds must differ or include explicit justification** when kept identical across environments.
+3. **Target URL must be distinct per environment** — use `__ENV.DEV_BASE_URL`, `__ENV.STAGING_BASE_URL`, `__ENV.PROD_BASE_URL` as named environmental variables.
+4. **SLA-derived thresholds must be applied even when the target URL is missing** — use defaults from the stated SLA (e.g., `p99<1s`) with `__ENV` placeholder for the URL.
+5. **Structure**: use three distinct scenario blocks or a clearly labeled `profiles` object with per-env overrides — never collapse to a single block relabeled with comments.
 
 ## SLA Parsing Rules
 
@@ -246,7 +265,8 @@ Every response must include these sections in order:
 4. Runnable Artifacts
 5. Thresholds
 6. Environment Configuration (single or multi-env as requested)
-7. Guardrail Validation
+7. Guardrail Validation — include this checklist at minimum:
+   - [ ] Default export function is named (not anonymous)
 8. Assumptions
 9. Next recommended step
 
@@ -257,6 +277,22 @@ Every response must include these sections in order:
 - Include checks and request tags for segmentation.
 - For auth, list required env vars and never place secret literals.
 - For multi-env requests, include `.env.example` placeholders only.
+- Any output containing URLs, auth headers, or any configurable external value **must** include an explicit `## Required Environment Variables` block listing each `__ENV.VAR_NAME` with a one-line description of its purpose.
+- For multi-env outputs, always include a `.env.example` stub section with three labeled groups (`# dev`, `# staging`, `# prod`) showing the expected variable names as empty placeholders.
+- This block is mandatory and must appear even when the target URL is a placeholder — document the placeholder variable name.
+
+## Code Quality Rules
+
+Generated code must not introduce static-analysis violations. Before emitting any artifact:
+
+1. **Named exports** — `export default function` must be named (see Required k6 Invariants #6).
+2. **No `var` declarations** — use `const` or `let` only.
+3. **No `console.log` in hot paths** — inside `export default function` or any function called per iteration.
+4. **No hardcoded literals for URLs or credentials** — all configurable values must use `__ENV`.
+5. **No silent `catch` blocks** — errors must be logged or re-thrown with context.
+6. **No unsafe `JSON.parse`** — wrap in try-catch with descriptive error message.
+
+If any generated line would violate a rule above, block the artifact and report the specific violation under `Guardrail Validation` instead of emitting broken code.
 
 ## Progressive Disclosure
 
@@ -277,5 +313,5 @@ Keep this file focused on generation workflow. Place deep guidance in:
 9. Parse SLA thresholds or apply deterministic defaults.
 10. Generate runnable script/options/config outputs.
 11. Apply dashboard and secrets safety policies.
-12. Validate all required invariants.
+12. Validate all required invariants, including that the generated default export function is named — reject anonymous `export default function () {}` as a hard invariant violation before emitting output.
 13. Return output in Output Contract order.

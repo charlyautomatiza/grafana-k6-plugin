@@ -89,6 +89,7 @@ Do not emit final validation findings after this fallback.
    - Silent `catch` blocks that swallow errors
    - Unsafe parsing without guarded failure handling
    - Quality violations mapped to static-analysis concerns (including S7726-class findings)
+   - **Anonymous default export function** — `export default function() {}` without a name is a quality violation. Flag as `WARNING`: "Default export function must be named for traceability and debuggability. Example: `export default function runLoad() {}`". The naming convention is `run<ScenarioType>` or `run<Protocol><ScenarioType>`.
 </validation-rules>
 
 ## Required k6 Invariants
@@ -117,13 +118,28 @@ Output artifact requirements:
 
 - Use a single stable output artifact name: `validation-report.md`.
 - Use Markdown as the required output format.
+- Use exactly these H2 section headers in this order — no sections may be added, removed, reordered, or renamed:
+   1. `## Validation Summary`
+   2. `## Scope and Assumptions`
+   3. `## Mandatory Invariant Results`
+   4. `## Detailed Findings`
+   5. `## Suggested Fixes`
+   6. `## Next Step`
+- `## Validation Summary` must always begin with a status badge on its own line: `**Status: PASS**`, `**Status: WARN**`, or `**Status: FAIL**`.
+- `## Mandatory Invariant Results` must include a checklist item for each invariant from `Required k6 Invariants`, even if the result is ✅ pass.
 
-1. Validation Summary (`pass`/`warn`/`fail`)
-2. Scope and Assumptions
-3. Mandatory Invariant Results
-4. Detailed Findings
-5. Suggested Fixes
-6. Next Step
+**Output budget:**
+- Sections `Validation Summary` + `Mandatory Invariant Results` + `Detailed Findings` combined must target ≤ 600 tokens.
+- Use a compact findings table with these columns: `#` · `Severity` · `Finding` · `Recommended Fix` (one-liner).
+- Extended explanations, code examples, and multi-step remediation instructions belong exclusively in `Suggested Fixes`.
+- Do not repeat finding descriptions between `Detailed Findings` and `Suggested Fixes` — `Detailed Findings` identifies; `Suggested Fixes` remediates.
+
+**Findings table format:**
+
+| # | Severity | Finding | Recommended Fix |
+|---|---|---|---|
+| 1 | ERROR | Missing thresholds | Add `thresholds` block to `options` |
+| 2 | WARNING | Anonymous default function | Rename to `export default function runLoad()` |
 
 ## Progressive Disclosure
 
