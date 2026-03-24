@@ -22,9 +22,9 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 ```md
 > [?] MISSING REQUIREMENT: Missing target, scenario, SLA, or protocol detail
-required: target, scenario type, SLA requirements, and protocol
+missing: target, scenario type, SLA requirements, protocol
 why: deterministic planning cannot proceed without baseline planning inputs
-next_question: What target endpoint, scenario type, SLA, and protocol should this plan use?
+next_question: What target URL or endpoint should this plan use?
 ```
 
 Do not continue plan generation after fallback.
@@ -35,9 +35,9 @@ When fallback is required, always use this portable payload shape:
 
 ```md
 > [?] MISSING REQUIREMENT: <short missing requirement summary>
-required: <comma-separated missing fields>
+missing: <comma-separated missing fields>
 why: <why plan generation cannot continue deterministically>
-next_question: <single question that unblocks next step>
+next_question: <single, specific question that unblocks the next step>
 ```
 
 Do not emit final plan content after this fallback.

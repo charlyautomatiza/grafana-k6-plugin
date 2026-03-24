@@ -33,9 +33,9 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 ```md
 > [?] MISSING REQUIREMENT: Missing build input for runnable artifacts
-required: target, scenario type, SLA requirements, and protocol
+missing: target, scenario type, SLA requirements, protocol
 why: deterministic generation cannot proceed safely without minimum build inputs
-next_question: What target endpoint, scenario type, SLA, and protocol should this build use?
+next_question: What target URL or endpoint should this build use?
 ```
 
 Do not continue generation after fallback.
@@ -46,9 +46,9 @@ When fallback is required, always use this portable payload shape:
 
 ```md
 > [?] MISSING REQUIREMENT: <short missing requirement summary>
-required: <comma-separated missing fields>
+missing: <comma-separated missing fields>
 why: <why generation cannot continue deterministically>
-next_question: <single question that unblocks next step>
+next_question: <single, specific question that unblocks the next step>
 ```
 
 Do not emit final artifact content after this fallback.

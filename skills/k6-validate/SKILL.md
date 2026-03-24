@@ -22,9 +22,9 @@ At the beginning of the workflow, detect and use interaction tools in this order
 
 ```md
 > [?] MISSING REQUIREMENT: Missing script path or validation scope
-required: script path and validation scope (protocol, scenario type, or profile)
+missing: script path, validation scope
 why: deterministic validation report cannot run without target and scope
-next_question: Which script should be validated and what protocol, scenario type, or profile context applies?
+next_question: Which script should be validated?
 ```
 
 Do not continue validation after fallback.
@@ -35,9 +35,9 @@ When fallback is required, always use this portable payload shape:
 
 ```md
 > [?] MISSING REQUIREMENT: <short missing requirement summary>
-required: <comma-separated missing fields>
+missing: <comma-separated missing fields>
 why: <why validation cannot continue deterministically>
-next_question: <single question that unblocks next step>
+next_question: <single, specific question that unblocks the next step>
 ```
 
 Do not emit final validation findings after this fallback.
@@ -89,7 +89,7 @@ Do not emit final validation findings after this fallback.
    - Silent `catch` blocks that swallow errors
    - Unsafe parsing without guarded failure handling
    - Quality violations mapped to static-analysis concerns (including S7726-class findings)
-   - **Anonymous default export function** — `export default function() {}` without a name is a quality violation. Flag as `ERROR`: "Default export function must be named for traceability and debuggability. Example: `export default function runLoad() {}`". The naming convention is `run<ScenarioType>` or `run<Protocol><ScenarioType>`.
+   - **Anonymous default export function** — `export default function() {}` without a name is a quality violation. Flag as `WARNING`: "Default export function should be named for traceability and debuggability. Example: `export default function runLoad() {}`". The naming convention is `run<ScenarioType>` or `run<Protocol><ScenarioType>`.
 </validation-rules>
 
 ## Required k6 Invariants
