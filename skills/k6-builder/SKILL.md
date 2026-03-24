@@ -224,6 +224,26 @@ Defaults per profile when SLA is not provided:
 - `aggressive`: p95<300ms, p99<700ms, error<0.5%, checks>99%
 </sla-rules>
 
+## Base URL Template Rule
+
+When generating artifacts (single or multi-environment):
+
+**For HTTP/gRPC/Browser protocols:**
+- If `target` is explicitly provided (literal URL), wrap it in `__ENV`:
+  ```javascript
+  const BASE_URL = __ENV.BASE_URL || 'https://api.example.com';  // fallback for local testing
+  ```
+- **Never emit**: `const BASE_URL = 'https://api.example.com';` (hardcoded literal without `__ENV`)
+- Exception: Only if user explicitly asks for hardcoded URL (e.g., "quick smoke test for local"), document as assumption.
+
+**For multi-environment outputs:**
+- Always use pattern: `__ENV[`${env.toUpperCase()}_API_URL`]`
+- Append a `.env.example` stub with all required variables.
+
+**Validation**: After artifact generation, scan for violations:
+- If protocol in [http, grpc, browser] and artifact contains `= 'https://` or `= "https://` without `__ENV`, **REJECT**.
+- Add to guardrail validation checklist: `[ ] Base URL uses __ENV, not hardcoded literals`
+
 ## Protocol-Specific Generation
 
 <protocol-patterns>
@@ -269,6 +289,15 @@ Every response must include these sections in order:
    - [ ] Default export function is named (not anonymous)
 8. Assumptions
 9. Validation Handoff (required) — include one runnable command for `k6-validate`
+   - **For smoke tests specifically**: Append explicit command block:
+     ```
+     ## k6-validate Recommendation
+     
+     Run k6-validate to check this smoke artifact:
+     
+     k6-validate <your-plan-or-test-config>
+     ```
+   - **For other scenarios** (load, stress, soak, spike): Include validation recommendation that references k6-validate.
 10. Next recommended step
 
 ## Runnable Artifact Rules
@@ -287,6 +316,11 @@ Every response must include these sections in order:
 Generated code must not introduce static-analysis violations. Before emitting any artifact:
 
 1. **Named exports** — `export default function` must be named (see Required k6 Invariants #6).
+   - Generate using naming convention: `run<Protocol><ScenarioType>` (e.g., `runHttpLoad()`, `runGrpcSmoke()`).
+   - **VALIDATION (MANDATORY)**: After code generation, scan the artifact for `export default function` followed by `(`. 
+   - If the pattern matches `export default function\s*\(` (anonymous), **REJECT** the artifact immediately.
+   - Add to guardrail violations: "Default export function must be named (e.g., `runHttpLoad`)". Do not emit unless function is named.
+   
 2. **No `var` declarations** — use `const` or `let` only.
 3. **No `console.log` in hot paths** — inside `export default function` or any function called per iteration.
 4. **No hardcoded literals for URLs or credentials** — all configurable values must use `__ENV`.

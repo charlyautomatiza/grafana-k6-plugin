@@ -50,6 +50,11 @@ Do not emit final plan content after this fallback.
    - What scenario type do you need? Options: load, stress, spike, soak, smoke (if `scenario` missing)
    - What are your SLA requirements? Example: p95<500ms,error<1% (if `sla` missing)
    - What protocol should this test use? Options: http, grpc, browser (if `protocol` missing)
+   
+   **Edge case hardening**: When user input is ambiguous or conflicts with best practices:
+   - If SLA thresholds conflict (e.g., "p95<100ms" for a high-latency service), ask clarification.
+   - If scenario and SLA are mismatched (e.g., "smoke test with SLA p99<50ms"), flag and ask confirmation.
+   - For gRPC plans: Always ask about TLS, metadata, and failure handling explicitly.
 
    Round contract:
    - **Round 1**: one consolidated baseline question block with all minimum required questions.

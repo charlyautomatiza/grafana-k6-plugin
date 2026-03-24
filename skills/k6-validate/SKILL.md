@@ -83,13 +83,13 @@ Do not emit final validation findings after this fallback.
 
 4. **Anti-Patterns to Flag**:
    - Hard-coded credentials
-   - Insecure hard-coded environment defaults/fallbacks in runnable scripts
+   - Insecure hard-coded environment defaults/fallbacks in runnable scripts (without `__ENV` fallback)
    - Unbounded loops
    - Synchronous waits without reason
    - Silent `catch` blocks that swallow errors
    - Unsafe parsing without guarded failure handling
    - Quality violations mapped to static-analysis concerns (including S7726-class findings)
-   - **Anonymous default export function** — `export default function() {}` without a name is a quality violation. Flag as `WARNING`: "Default export function must be named for traceability and debuggability. Example: `export default function runLoad() {}`". The naming convention is `run<ScenarioType>` or `run<Protocol><ScenarioType>`.
+   - **Anonymous default export function** — `export default function() {}` without a name is a quality violation. Flag as `ERROR`: "Default export function must be named for traceability and debuggability. Example: `export default function runLoad() {}`". The naming convention is `run<ScenarioType>` or `run<Protocol><ScenarioType>`.
 </validation-rules>
 
 ## Required k6 Invariants
@@ -129,10 +129,15 @@ Output artifact requirements:
 - `## Mandatory Invariant Results` must include a checklist item for each invariant from `Required k6 Invariants`, even if the result is ✅ pass.
 
 **Output budget:**
-- Sections `Validation Summary` + `Mandatory Invariant Results` + `Detailed Findings` combined must target ≤ 600 tokens.
-- Use a compact findings table with these columns: `#` · `Severity` · `Finding` · `Recommended Fix` (one-liner).
-- Extended explanations, code examples, and multi-step remediation instructions belong exclusively in `Suggested Fixes`.
+- Sections `Validation Summary` + `Mandatory Invariant Results` + `Detailed Findings` combined must target ≤ 600 tokens total.
+- Use a compact findings table with these columns: `#` · `Severity` · `Finding` · `Recommended Fix` (one-liner max).
+- Extended explanations, code examples, and multi-step remediation instructions belong exclusively in `Suggested Fixes`. Each fix should include:
+  - `issue`: The problem detected
+  - `severity`: ERROR, WARNING, or INFO
+  - `evidence`: Code snippet or line reference showing the issue
+  - `fix_snippet`: Executable corrected code (when applicable)
 - Do not repeat finding descriptions between `Detailed Findings` and `Suggested Fixes` — `Detailed Findings` identifies; `Suggested Fixes` remediates.
+- **Token budget rule**: If combined findings exceed token budget, deprioritize INFO-level findings; ERROR and WARNING must always be reported.
 
 **Findings table format:**
 
