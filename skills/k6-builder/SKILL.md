@@ -154,7 +154,8 @@ Always enforce these validations before returning output:
    - Require environment variables (`__ENV`) for auth and base URL.
 5. **Multi-environment coherence is required**
    - For `dev/staging/prod`, validate `dev <= staging <= prod` for VU progression.
-   - Emit `WARNING` if user override violates progression without explicit justification.
+   - Emit `WARNING` if user override violates VU progression without explicit justification.
+   - **SLA thresholds are invariants**: the stated SLA must be identical across dev, staging, and prod. If any environment has relaxed thresholds (e.g., `p99<2s` in dev when the SLA states `p99<1s`), reject the artifact and report under Guardrail Validation.
 6. **Named default function is required**
    - The `export default function` must always have a name derived from the active scenario and protocol.
    - Naming convention: `run<Protocol><ScenarioType>` — example: `runHttpLoad`, `runGrpcStress`, `runBrowserSmoke`.
@@ -186,7 +187,7 @@ If user asks for exact iteration accounting:
 When building multi-environment outputs (dev/staging/prod), apply mandatory differentiation:
 
 1. **VU counts must differ explicitly** across environments — never use identical values. Baseline pattern: dev ≤ staging ≤ prod.
-2. **Thresholds must differ or include explicit justification** when kept identical across environments.
+2. **SLA-derived thresholds are invariants across all environments** — never relax or adjust threshold values per environment. The stated SLA (e.g., `p99<1s`) must be applied identically to dev, staging, and prod. Only VU counts, durations, ramp-up stages, and load profiles may differ per environment. Any threshold relaxation (e.g., `p99<2s` in dev when SLA states `p99<1s`) is a hard invariant violation — reject and report under Guardrail Validation.
 3. **Target URL must be distinct per environment** — use `__ENV.DEV_BASE_URL`, `__ENV.STAGING_BASE_URL`, `__ENV.PROD_BASE_URL` as named environmental variables.
 4. **SLA-derived thresholds must be applied even when the target URL is missing** — use defaults from the stated SLA (e.g., `p99<1s`) with `__ENV` placeholder for the URL.
 5. **Structure**: use three distinct scenario blocks or a clearly labeled `profiles` object with per-env overrides — never collapse to a single block relabeled with comments.
@@ -222,6 +223,19 @@ Defaults per profile when SLA is not provided:
 - `minimal`: p95<800ms, error<2%
 - `standard`: p95<500ms, error<1%
 - `aggressive`: p95<300ms, p99<700ms, error<0.5%, checks>99%
+
+### Protocol-to-Threshold Mapping
+
+When generating thresholds, apply the correct metric per protocol. Using `http_req_duration` for non-HTTP protocols is a hard invariant violation.
+
+| Protocol | Required threshold metric |
+|---|---|
+| HTTP | `http_req_duration: ['p(95)<Nms']` |
+| WebSocket | `ws_session_duration: ['p(95)<Nms']` (custom Trend — `http_req_duration` does not capture WS latency) |
+| gRPC | `grpc_req_duration: ['p(99)<Nms']` |
+| Browser | `browser_http_req_duration: ['p(95)<Nms']` |
+
+If the inferred protocol does not match `http`, ensure the threshold uses the correct metric above — never substitute `http_req_duration` as a fallback.
 </sla-rules>
 
 ## Base URL Template Rule
@@ -264,6 +278,22 @@ When generating artifacts (single or multi-environment):
 - Always close page/context at iteration end
 - Prefer `data-testid` selectors
 - Collect Web Vitals when relevant
+- For requested multi-step user journeys, model the full sequence explicitly in order (do not collapse or skip steps).
+- For checkout/browser journeys, include an end-to-end threshold aligned to the requested KPI/SLA (for example `p(95)<4000` when the request states p95<4s).
+
+### WebSocket
+- Use `ws.connect()` from `k6/ws` and handle all lifecycle events: `on('open')`, `on('message')`, `on('error')`, `on('close')`.
+- Always add a bounded session duration to avoid infinitely hanging connections.
+- **WebSocket latency threshold is required**: `http_req_duration` does not capture WebSocket latency. Use a custom `Trend` metric and include it in `thresholds`:
+  ```js
+  import { Trend } from 'k6/metrics';
+  const wsLatency = new Trend('ws_session_duration');
+  // in default function, record per-message timing:
+  // wsLatency.add(Date.now() - sentAt);
+  // in options.thresholds:
+  // ws_session_duration: ['p(95)<150']
+  ```
+- Add to guardrail checklist: `[ ] WebSocket script includes ws_session_duration Trend with p(95) threshold`.
 </protocol-patterns>
 
 ## Dashboard Policy
@@ -287,7 +317,13 @@ Every response must include these sections in order:
 6. Environment Configuration (single or multi-env as requested)
 7. Guardrail Validation — include this checklist at minimum:
    - [ ] Default export function is named (not anonymous)
-8. Assumptions
+   - [ ] SLA thresholds are identical across all environments (no per-env threshold relaxation)
+   - [ ] Base URL uses `__ENV`, not hardcoded literals
+8. Assumptions — use numbered list format:
+   - Each entry: `(N) field=value [provided]` or `(N) field=value [assumed]`
+   - Example: `(1) scenario=load [provided], (2) SLA=p95<500ms [provided], (3) auth=none [assumed]`
+   - Every inferred or defaulted value must be tagged `[assumed]`; every user-provided value tagged `[provided]`
+   - Every partial-template or `[assumption-based]` artifact MUST have this block populated with all fields
 9. Validation Handoff (required) — include one runnable command for `k6-validate`
    - **For smoke tests specifically**: Append explicit command block:
      ```
@@ -308,8 +344,10 @@ Every response must include these sections in order:
 - For auth, list required env vars and never place secret literals.
 - For multi-env requests, include `.env.example` placeholders only.
 - Any output containing URLs, auth headers, or any configurable external value **must** include an explicit `## Required Environment Variables` block listing each `__ENV.VAR_NAME` with a one-line description of its purpose.
+- The `## Required Environment Variables` block must be concrete and non-empty; include every required runtime variable and avoid generic placeholders like "add your vars here".
 - For multi-env outputs, always include a `.env.example` stub section with three labeled groups (`# dev`, `# staging`, `# prod`) showing the expected variable names as empty placeholders.
 - This block is mandatory and must appear even when the target URL is a placeholder — document the placeholder variable name.
+- For browser or transaction flows with multiple business steps, emit the full ordered step list in code/comments so the generated artifact preserves the requested journey sequence.
 
 ## Code Quality Rules
 
@@ -345,8 +383,9 @@ Keep this file focused on generation workflow. Place deep guidance in:
 6. Add more questions in the same system if other critical ambiguities or missing requirements are detected.
 7. Build internal minimal plan from inputs.
 8. Select executor and derive coherent scenario config.
-9. Parse SLA thresholds or apply deterministic defaults.
-10. Generate runnable script/options/config outputs.
-11. Apply dashboard and secrets safety policies.
-12. Validate all required invariants, including that the generated default export function is named — reject anonymous `export default function () {}` as a hard invariant violation before emitting output.
-13. Return output in Output Contract order.
+9. Enforce executor coherence: if scenario type is `load` and the user did not explicitly request rate-based control, recommend and emit `ramping-vus`.
+10. Parse SLA thresholds or apply deterministic defaults.
+11. Generate runnable script/options/config outputs.
+12. Apply dashboard and secrets safety policies.
+13. Validate all required invariants, including: (a) the generated default export function is named — reject anonymous `export default function () {}`; (b) SLA thresholds are identical across all environments — reject any per-environment threshold relaxation. Both are hard invariant violations that block output emission.
+14. Return output in Output Contract order.

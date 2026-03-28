@@ -70,19 +70,23 @@ Do not emit final validation findings after this fallback.
    - For broader module compatibility and allowed import coverage, cross-check `references/goja-k6-compatibility-matrix.md`.
 
 2. **Performance Best Practices**:
-   - Sleep between iterations (avoid tight loops)
-   - Checks implemented for assertions
+   - Sleep between iterations (avoid tight loops); if missing, report at least `WARNING`
+   - Checks implemented for assertions; if absent, report `ERROR`
    - Timeouts set on requests
-   - Tagged requests for metric segmentation
+   - Tagged requests for metric segmentation; if missing for multi-endpoint flows, report `WARNING`
+   - Profile/load-context clarity present (scenario type and expected profile intensity are inferable); if missing, report `WARNING`
 
 3. **Protocol-Specific**:
    - HTTP: timeouts set, checks included
    - gRPC: connections properly closed
    - gRPC: flag `client.connect()` outside `default function`, `setup()`, or `teardown()` as `WARNING` (connection lifecycle leakage risk)
    - Browser: page/context closure
+   - WebSocket: socket lifecycle hygiene (`on('open')`, `on('error')`, graceful close path, and bounded session duration)
+   - Browser: if page/context closure is missing in any iteration path, report `WARNING`
 
 4. **Anti-Patterns to Flag**:
    - Hard-coded credentials
+   - Hard-coded production URLs (for example `https://api.prod...`) in runnable scripts without `__ENV` control
    - Insecure hard-coded environment defaults/fallbacks in runnable scripts (without `__ENV` fallback)
    - Unbounded loops
    - Synchronous waits without reason
@@ -109,6 +113,11 @@ Always enforce these validations as mandatory checks:
 4. **Secrets and runnable safety are required**
    - Flag hard-coded credentials/tokens as error.
    - Flag insecure runnable defaults for secrets as error or warning based on impact.
+   - Flag hard-coded production URLs without `__ENV` control as at least `WARNING` (elevate to `ERROR` when credentials or sensitive paths are coupled).
+5. **Lifecycle hygiene is required**
+   - Browser scripts must close `page`/`context` in all execution paths.
+   - gRPC scripts must show connect/invoke/close lifecycle consistency.
+   - WebSocket scripts must include open/message/error/close handling and an explicit bounded lifetime.
 
 ## Output Contract
 
@@ -158,7 +167,7 @@ Keep this file focused on validation workflow. Place deep guidance in:
 2. Run Tool Discovery Protocol if required input is missing.
 3. Validate syntax and structure.
 4. Validate performance best practices and protocol-specific rules.
-5. Enforce required threshold and load-profile invariants.
+5. Enforce required threshold, load-profile, and lifecycle-hygiene invariants.
 6. If explicit SLA is present, compare script thresholds against the declared SLA and emit `WARNING` for more lax thresholds.
-7. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals).
+7. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals, hard-coded production URLs, missing checks/sleep/tags).
 8. Return deterministic report in `validation-report.md` using Markdown and the Output Contract section order.

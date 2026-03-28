@@ -145,6 +145,7 @@ Always enforce these validations before returning the plan:
 2. **Load profile is required**
    - Plan must include explicit VUs and duration (or explicit stage set with equivalent duration and target VUs).
    - If `vus`/`duration` are missing, derive from profile defaults and state assumptions.
+   - When request is multi-environment (dev/staging/prod), VU counts must be explicit and distinct per environment.
 3. **Runnable URL hard-coding is forbidden**
    - Do not generate runnable scripts with fixed live target URLs.
    - Require `__ENV.BASE_URL` (or equivalent) for executable output.
@@ -161,6 +162,18 @@ Always enforce these validations before returning the plan:
    - HTTP plans must always include: `http_req_duration` threshold, explicit timeout guidance, and `checks` for response validation.
    - Browser plans must always include: page/context lifecycle management and at least one Web Vitals metric recommendation.
    - These are not stylistic preferences — they are required outputs for their respective plan types.
+7. **Journey/state fidelity is required**
+   - For multi-step user journeys, preserve the full requested sequence in order; do not merge, reorder, or drop steps.
+   - Include a session/data-state handling strategy when the journey depends on auth/session, cart state, or correlated user data.
+   - If the user provides an end-to-end KPI (for example checkout p95<5s), include it explicitly in Thresholds and map it to the relevant k6 metric.
+   - **Correlation map required for flows with 3+ steps that extract data**: For every step that produces a value consumed by a later step, the plan must document it explicitly using this structure:
+     ```
+     correlation_map:
+       - step: login → extracts: access_token → used_by: [createOrder, applyCoupon, pay, verify]
+       - step: createOrder → extracts: orderId → used_by: [applyCoupon, pay, verify]
+       - step: applyCoupon → extracts: discountApplied → used_by: [pay, verify]
+     ```
+   - For each extraction: name the variable, its source (JSON field or response header), and every downstream step that consumes it. Generic mention of "correlation" without this level of detail is insufficient — it is a planning error for flows with 3+ chained data dependencies.
 
 ## Output Contract
 
@@ -209,6 +222,7 @@ Parse SLA string to extract threshold conditions. Supported syntax:
 ### Parsing Examples
 - Input: `p95<400ms,error<1%` → p95 AND error rate thresholds
 - Input: `p95<500ms AND p99<900ms` → Both percentiles required
+- Input: `p99<200ms` → p99 threshold must be emitted exactly (no conversion to p95-only)
 - Input: `p95<2s` → Single threshold with p99 inferred (see sla-defaults.md)
 
 Defaults per profile when SLA is not provided:
@@ -258,9 +272,10 @@ When user invokes this skill:
 7. Add more questions in the same system if other critical ambiguities or missing requirements are detected.
 8. Select executor based on scenario type.
 9. Parse SLA thresholds or apply deterministic defaults.
-10. Validate explicit or derived VUs and duration.
-11. Generate textual plan with recommendations.
-12. Validate output structure using the Output Contract section order.
-13. Add exactly one deterministic `Next recommended step` based on first unresolved dependency.
-14. If `output=script` or user explicitly requests runnable code, route to k6-builder with accumulated plan parameters (`target`, `scenario`, `sla`, `protocol`, `profile`, `method`, `auth`, `duration`, `vus`).
-15. Return the plan and assumptions summary.
+10. For journey-style plans, preserve the full requested sequence and add session/data-state handling strategy.
+11. Validate explicit or derived VUs and duration.
+12. Generate textual plan with recommendations.
+13. Validate output structure using the Output Contract section order.
+14. Add exactly one deterministic `Next recommended step` based on first unresolved dependency.
+15. If `output=script` or user explicitly requests runnable code, route to k6-builder with accumulated plan parameters (`target`, `scenario`, `sla`, `protocol`, `profile`, `method`, `auth`, `duration`, `vus`).
+16. Return the plan and assumptions summary.
