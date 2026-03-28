@@ -72,6 +72,11 @@ Do not emit final artifact content after this fallback.
    - Mark each assumption with `[assumption-based]` in a `pending_questions` block appended at the end of the artifact.
    - The partial template must still satisfy all other invariants (named function, thresholds, load profile via defaults).
 
+   **Partial template override for auth-only edge cases:**
+   - If the user explicitly asks for an auth pattern/template and the scenario/protocol is clear but `target` is missing, generate an auth-focused partial template.
+   - Use `__ENV.BASE_URL` (or protocol-equivalent env var) placeholder and mark all unresolved values as `[assumption-based]`.
+   - Append a `pending_questions` block with one direct question for the unresolved target.
+
    Additional questions must be integrated into the same question system, not handled as a separate side flow:
    - Add an HTTP method question when `protocol=http` and the method cannot be inferred safely.
    - Add one or more authentication questions when auth is required or unknown and executable output depends on it.
@@ -161,6 +166,33 @@ Always enforce these validations before returning output:
    - Naming convention: `run<Protocol><ScenarioType>` — example: `runHttpLoad`, `runGrpcStress`, `runBrowserSmoke`.
    - If scenario or protocol is not resolved yet, use a generic but named function: `runPerfTest`.
 
+### SLA Consistency Across Multi-Environment
+
+When building for multiple environments (dev/staging/prod):
+
+- Threshold values MUST BE IDENTICAL across all environments.
+- VU counts MAY VARY per environment.
+- Duration MAY VARY per environment.
+- Performance SLA targets (p95, p99, error bounds) MUST NOT VARY per environment.
+
+Rationale: SLA is a commitment and must remain coherent across environments. Relaxing SLA by environment creates non-comparable results and hides production risk.
+
+Canonical cross-skill warning (must match `k6-plan` exactly):
+
+`WARNING: SLA must be identical across environments to maintain testing coherence.`
+
+Canonical enforcement flow (builder stage):
+
+1. Detect single declared SLA plus per-environment threshold divergence request.
+2. Emit the canonical warning string above.
+3. Ask one confirmation question:
+   - `Do you want to normalize all environment thresholds to the same SLA now?`
+4. If user confirms normalization:
+   - Continue generation with identical thresholds across dev/staging/prod.
+5. If user rejects normalization:
+   - Reject runnable artifact emission and report violation under Guardrail Validation.
+   - Do not emit per-environment relaxed thresholds.
+
 ## Builder Decision Rules
 
 ### Scenario to Executor Mapping
@@ -191,6 +223,29 @@ When building multi-environment outputs (dev/staging/prod), apply mandatory diff
 3. **Target URL must be distinct per environment** — use `__ENV.DEV_BASE_URL`, `__ENV.STAGING_BASE_URL`, `__ENV.PROD_BASE_URL` as named environmental variables.
 4. **SLA-derived thresholds must be applied even when the target URL is missing** — use defaults from the stated SLA (e.g., `p99<1s`) with `__ENV` placeholder for the URL.
 5. **Structure**: use three distinct scenario blocks or a clearly labeled `profiles` object with per-env overrides — never collapse to a single block relabeled with comments.
+
+## Multi-Environment Architecture Options
+
+When user requests multi-env outputs, offer two architecture options and make the default explicit:
+
+### Option 1: Separate Scripts
+
+- Files: `dev.js`, `staging.js`, `prod.js`
+- Pros: Strong isolation per environment
+- Cons: Duplication and cross-env maintenance overhead
+
+### Option 2: Single Script with Environment Switcher (recommended default)
+
+- File: `load-test.js`
+- Pattern: `__ENV.ENVIRONMENT` selects environment-specific VUs/duration
+- Pros: DRY, single source of truth for shared logic and thresholds
+- Cons: Slightly more control-flow branching
+
+Default behavior:
+
+- Recommend Option 2 unless user explicitly asks for separate files.
+- Still mention Option 1 as an available alternative.
+- Keep SLA thresholds identical regardless of selected architecture.
 
 ## SLA Parsing Rules
 
@@ -319,11 +374,12 @@ Every response must include these sections in order:
    - [ ] Default export function is named (not anonymous)
    - [ ] SLA thresholds are identical across all environments (no per-env threshold relaxation)
    - [ ] Base URL uses `__ENV`, not hardcoded literals
-8. Assumptions — use numbered list format:
-   - Each entry: `(N) field=value [provided]` or `(N) field=value [assumed]`
-   - Example: `(1) scenario=load [provided], (2) SLA=p95<500ms [provided], (3) auth=none [assumed]`
-   - Every inferred or defaulted value must be tagged `[assumed]`; every user-provided value tagged `[provided]`
-   - Every partial-template or `[assumption-based]` artifact MUST have this block populated with all fields
+8. Assumptions & Defaults — compact format required:
+   - Keep this section to 3 lines maximum.
+   - Line 1: `Provided: <comma-separated provided inputs>`
+   - Line 2: `Defaults Applied: <comma-separated key=value defaults>`
+   - Line 3 (only when provisional/partial): `Pending Questions: <single unblocker question>`
+   - Preserve explicit `[provided]` and `[assumed]` tags inline per key-value token.
 9. Validation Handoff (required) — include one runnable command for `k6-validate`
    - **For smoke tests specifically**: Append explicit command block:
      ```
@@ -385,7 +441,8 @@ Keep this file focused on generation workflow. Place deep guidance in:
 8. Select executor and derive coherent scenario config.
 9. Enforce executor coherence: if scenario type is `load` and the user did not explicitly request rate-based control, recommend and emit `ramping-vus`.
 10. Parse SLA thresholds or apply deterministic defaults.
-11. Generate runnable script/options/config outputs.
-12. Apply dashboard and secrets safety policies.
-13. Validate all required invariants, including: (a) the generated default export function is named — reject anonymous `export default function () {}`; (b) SLA thresholds are identical across all environments — reject any per-environment threshold relaxation. Both are hard invariant violations that block output emission.
-14. Return output in Output Contract order.
+11. For multi-environment requests, choose architecture using Multi-Environment Architecture Options (default single-script unless explicitly overridden).
+12. Generate runnable script/options/config outputs.
+13. Apply dashboard and secrets safety policies.
+14. Validate all required invariants, including: (a) the generated default export function is named — reject anonymous `export default function () {}`; (b) SLA thresholds are identical across all environments — reject any per-environment threshold relaxation. Both are hard invariant violations that block output emission.
+15. Return output in Output Contract order.

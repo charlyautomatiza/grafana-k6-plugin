@@ -80,9 +80,14 @@ Do not emit final validation findings after this fallback.
    - HTTP: timeouts set, checks included
    - gRPC: connections properly closed
    - gRPC: flag `client.connect()` outside `default function`, `setup()`, or `teardown()` as `WARNING` (connection lifecycle leakage risk)
-   - Browser: page/context closure
+   - Browser: page/context closure in all execution paths (success, catch, finally, and early return paths)
    - WebSocket: socket lifecycle hygiene (`on('open')`, `on('error')`, graceful close path, and bounded session duration)
    - Browser: if page/context closure is missing in any iteration path, report `WARNING`
+   - Browser lifecycle path analysis is mandatory:
+     - Track each `newPage()` / `newContext()` creation.
+     - Evaluate all exits after creation (normal completion, `return`, `throw`, catch branches).
+     - If any path lacks corresponding `.close()`, emit `WARNING` with path evidence.
+     - Prefer `try/finally` remediation in `Suggested Fixes`.
 
 4. **Anti-Patterns to Flag**:
    - Hard-coded credentials
@@ -104,6 +109,7 @@ Always enforce these validations as mandatory checks:
    - Flag as error when thresholds are missing.
    - If user provides explicit SLA values in the validation prompt/context, compare thresholds against that SLA.
    - Flag as warning when thresholds exist but are more lax than stated SLA.
+   - For multi-environment artifacts with one declared SLA, threshold divergence across environments is `ERROR` because it violates cross-env SLA coherence expected by `k6-builder`.
 2. **Load profile is required**
    - Flag as error when no explicit load profile exists.
    - Require explicit `vus` and `duration` for time-based cases, or clear equivalent (`stages`, `iterations` + `vus`) for scenario-based definitions.
@@ -136,6 +142,9 @@ Output artifact requirements:
    6. `## Next Step`
 - `## Validation Summary` must always begin with a status badge on its own line: `**Status: PASS**`, `**Status: WARN**`, or `**Status: FAIL**`.
 - `## Mandatory Invariant Results` must include a checklist item for each invariant from `Required k6 Invariants`, even if the result is ✅ pass.
+- `## Detailed Findings` must group entries by severity in this order: 🔴 CRITICAL (`ERROR`) → 🟡 WARNING → ℹ️ INFO.
+- In each severity group, sort by impact first, then line order.
+- `## Suggested Fixes` must include a compact fix-priority matrix with counts and estimated time-to-fix per severity.
 
 **Output budget:**
 - Sections `Validation Summary` + `Mandatory Invariant Results` + `Detailed Findings` combined must target ≤ 600 tokens total.
@@ -145,8 +154,11 @@ Output artifact requirements:
   - `severity`: ERROR, WARNING, or INFO
   - `evidence`: Code snippet or line reference showing the issue
   - `fix_snippet`: Executable corrected code (when applicable)
+   - `estimated_time`: short estimate (for example `~5 min`)
 - Do not repeat finding descriptions between `Detailed Findings` and `Suggested Fixes` — `Detailed Findings` identifies; `Suggested Fixes` remediates.
 - **Token budget rule**: If combined findings exceed token budget, deprioritize INFO-level findings; ERROR and WARNING must always be reported.
+
+For common anti-patterns, point to `skills/k6-validate/references/remediation-playbooks.md` and include the matching playbook name.
 
 **Findings table format:**
 
@@ -154,6 +166,31 @@ Output artifact requirements:
 |---|---|---|---|
 | 1 | ERROR | Missing thresholds | Add `thresholds` block to `options` |
 | 2 | WARNING | Anonymous default function | Rename to `export default function runLoad()` |
+
+Under the table, include this compact template:
+
+```md
+### 🔴 CRITICAL (Fix Immediately)
+- <highest-impact findings only>
+
+### 🟡 WARNING (Fix Soon)
+- <quality/perf risks>
+
+### ℹ️ INFO (Optional)
+- <non-blocking improvements>
+```
+
+In `Suggested Fixes`, append:
+
+```md
+## Fix Priority Matrix
+
+| Priority | Category | Count | Estimated Time |
+|---|---|---:|---|
+| 🔴 CRITICAL | Security/Safety/Correctness | <n> | <total> |
+| 🟡 WARNING | Quality/Performance | <n> | <total> |
+| ℹ️ INFO | Best Practice | <n> | <total> |
+```
 
 ## Progressive Disclosure
 
@@ -169,5 +206,7 @@ Keep this file focused on validation workflow. Place deep guidance in:
 4. Validate performance best practices and protocol-specific rules.
 5. Enforce required threshold, load-profile, and lifecycle-hygiene invariants.
 6. If explicit SLA is present, compare script thresholds against the declared SLA and emit `WARNING` for more lax thresholds.
-7. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals, hard-coded production URLs, missing checks/sleep/tags).
-8. Return deterministic report in `validation-report.md` using Markdown and the Output Contract section order.
+7. For browser scripts, run path-based closure analysis for `page/context` resources and flag any non-closed path.
+8. Run quality-hardening checks (silent catch, unsafe parse, static-analysis signals, hard-coded production URLs, missing checks/sleep/tags).
+9. Reference remediation playbooks for every fixable finding that matches a known anti-pattern.
+10. Return deterministic report in `validation-report.md` using Markdown and the Output Contract section order.

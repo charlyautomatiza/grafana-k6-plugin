@@ -65,6 +65,7 @@ Do not emit final plan content after this fallback.
    - If `target` or `sla` is missing but the scenario type is clear (e.g., stress test with explicit VU target), generate a provisional plan with `[assumption-based]` annotations for all missing values.
    - A provisional plan must use profile defaults for SLA thresholds, label each assumed value explicitly, and append a `pending_questions` block listing what was assumed and why.
    - A provisional plan is always preferable to a hard stop when the core test shape is clear.
+   - If scenario type is ambiguous, do not generate a provisional plan; ask clarification using the Clarification Output Contract.
 
    Additional questions must be integrated into the same question system, not handled as a separate side flow:
    - Add an HTTP method question when `protocol=http` and the method cannot be inferred safely.
@@ -118,6 +119,57 @@ Before finalizing plan output or builder handoff parameters, add auth questions 
 2. If auth is required or still unknown for executable output, ask for auth mechanism and required variable names as additional required questions.
 3. Never hard-code credentials in examples or generated scripts.
 4. Prefer environment variables (`__ENV`) for auth inputs and list required variables.
+
+## SLA-Scenario Coherence Validation
+
+When both `scenario` and `sla` are available, run this coherence pass before finalizing output. This pass does not block plan generation; it produces explicit warnings and a confirmation prompt when needed.
+
+1. `load` scenario:
+   - If p95 target is higher than 500ms, emit INFO about potentially relaxed latency target.
+   - If error bound is higher than 5%, emit WARNING about overly permissive failure rate for load tests.
+2. `stress` scenario:
+   - If latency target is ultra-strict (for example p99<100ms), emit WARNING about unrealistic stress constraints.
+   - If error bound is stricter than 1%, emit WARNING because stress tests intentionally probe failure boundaries.
+3. `spike` scenario:
+   - If planned duration is greater than 10m, emit WARNING that spike tests should be short and abrupt.
+4. `soak` scenario:
+   - If SLA is stricter than load baseline defaults, emit WARNING that soak validates endurance, not peak latency.
+5. `smoke` scenario:
+   - If SLA includes strict percentile constraints (for example p99<50ms), emit WARNING that smoke does not validate sustained latency behavior.
+
+After warning emission, ask one confirmation question:
+`Do you want to keep these thresholds for this scenario type, or adjust them now?`
+
+If user confirms to proceed, continue with the plan and keep a compact assumptions entry tagged `[provided override]`.
+
+## SLA Consistency Across Multi-Environment
+
+When planning for multiple environments (dev/staging/prod):
+
+- Threshold values MUST BE IDENTICAL across all environments.
+- VU counts MAY VARY per environment.
+- Duration MAY VARY per environment.
+- Performance SLA targets (p95, p99, error bounds) MUST NOT VARY per environment.
+
+Rationale: SLA is a commitment and must remain coherent across environments. Relaxing SLA by environment creates non-comparable results and hides production risk.
+
+Canonical cross-skill warning (must match `k6-builder` exactly):
+
+`WARNING: SLA must be identical across environments to maintain testing coherence.`
+
+Canonical enforcement flow (planning stage):
+
+1. Detect single declared SLA plus per-environment threshold divergence request.
+2. Emit the canonical warning string above.
+3. Ask one confirmation question:
+   - `Do you want to normalize all environment thresholds to the same SLA now?`
+4. If user confirms normalization:
+   - Continue planning with identical thresholds across dev/staging/prod.
+5. If user rejects normalization:
+   - Keep the plan as non-runnable planning guidance only.
+   - Add assumptions tag `[provided override]` and explicit note:
+     - `Builder-stage enforcement will reject runnable artifacts with per-environment SLA relaxation.`
+   - Do not present relaxed thresholds as compliant defaults.
 
 ## Clarification Output Contract
 
@@ -184,8 +236,16 @@ Every response must include these sections in order:
 3. Load Profile (explicit or derived)
 4. Thresholds (SLA-derived or defaults)
 5. Protocol-Specific Notes
-6. Assumptions
+6. Assumptions & Defaults
 7. Next recommended step
+
+Assumptions & Defaults format must be compact and aligned with `k6-builder`:
+
+- Keep this section to 3 lines maximum.
+- Line 1: `Provided: <comma-separated provided inputs>`
+- Line 2: `Defaults Applied: <comma-separated key=value defaults>`
+- Line 3 (only when provisional): `Pending Questions: <single unblocker question>`
+- Preserve explicit `[provided]` and `[assumed]` tags inline per key-value token.
 
 ## Scenario to Executor Mapping
 
@@ -245,6 +305,16 @@ Defaults per profile when SLA is not provided:
 - Metrics: `grpc_req_duration`, `grpc_req_failed`
 - Always close connections in teardown
 - Handle metadata for authentication
+- Connection lifecycle guidance is mandatory:
+   - Create/load client once, outside the hot iteration path.
+   - Do not reconnect on every iteration unless explicitly justified.
+   - Prefer `teardown()` for `client.close()` to avoid leaked connections.
+- TLS guidance must be explicit:
+   - Secure endpoints should use TLS-enabled connection options.
+   - Non-TLS/plaintext mode must be marked as test-only assumption.
+- Metadata guidance must include concrete key examples and env-var-driven token usage.
+- Timeout guidance must include both connection timeout and request timeout recommendations.
+- Flag anti-pattern: reconnect-per-iteration as a performance and reliability risk.
 
 ### Browser
 - Use `browser.newContext()`, `context.newPage()`, `page.goto()`, `page.waitForSelector()`
