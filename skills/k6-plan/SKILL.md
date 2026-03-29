@@ -103,6 +103,15 @@ Do not emit final plan content after this fallback.
 2. If language is not explicit, default to English.
 3. Keep command names, k6 metric keys, and code identifiers in English.
 
+## Dashboard Policy
+
+Apply deterministic recommendation:
+
+1. CI/headless: `K6_WEB_DASHBOARD=false`
+2. Local browser troubleshooting: `K6_WEB_DASHBOARD=true`
+3. Local non-browser: default `K6_WEB_DASHBOARD=false` unless explicit opt-in
+4. Otherwise default `false`
+
 ## HTTP Method Question
 
 Before producing a final HTTP plan, add the method question to the same active question system:
@@ -210,7 +219,7 @@ Always enforce these validations before returning the plan:
    - Require environment variables (`__ENV`) for auth inputs.
 
 6. **Protocol-specific technical quality is required**
-   - gRPC plans must always include: `grpc_req_duration` metric, `client.connect()` in setup or default, and `client.close()` in teardown. Omitting any of these from a gRPC plan is a planning error.
+   - gRPC plans must always include: `grpc_req_duration` metric, `client.connect()` in setup or default, and guaranteed `client.close()` on all execution paths (teardown or `try/finally`). Omitting any of these from a gRPC plan is a planning error.
    - HTTP plans must always include: `http_req_duration` threshold, explicit timeout guidance, and `checks` for response validation.
    - Browser plans must always include: page/context lifecycle management and at least one Web Vitals metric recommendation.
    - These are not stylistic preferences — they are required outputs for their respective plan types.
@@ -303,7 +312,7 @@ Defaults per profile when SLA is not provided:
 ### gRPC
 - Use `grpc.Client()`, `client.load()`, `client.connect()`, `client.invoke()`
 - Metrics: `grpc_req_duration`, `grpc_req_failed`
-- Always close connections in teardown
+- Always close connections on all execution paths (teardown or `try/finally`)
 - Handle metadata for authentication
 - Connection lifecycle guidance is mandatory:
    - Create/load client once, outside the hot iteration path.

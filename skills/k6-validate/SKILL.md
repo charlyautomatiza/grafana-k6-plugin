@@ -55,6 +55,15 @@ Do not emit final validation findings after this fallback.
 - **Recommended profile** in validation references is advisory mapping from scenario type to default intensity, not a replacement for explicit user-provided values.
 - When both scenario type and profile are provided, validate executor fit against scenario type first and threshold/load intensity fit against profile second.
 
+## Dashboard Policy
+
+Apply deterministic recommendation:
+
+1. CI/headless: `K6_WEB_DASHBOARD=false`
+2. Local browser troubleshooting: `K6_WEB_DASHBOARD=true`
+3. Local non-browser: default `K6_WEB_DASHBOARD=false` unless explicit opt-in
+4. Otherwise default `false`
+
 ## Validation Rules
 
 <validation-rules>
@@ -71,7 +80,7 @@ Do not emit final validation findings after this fallback.
 
 2. **Performance Best Practices**:
    - Sleep between iterations (avoid tight loops); if missing, report at least `WARNING`
-   - Checks implemented for assertions; if absent, report `ERROR`
+   - Checks implemented for assertions; if absent, report `WARNING`
    - Timeouts set on requests
    - Tagged requests for metric segmentation; if missing for multi-endpoint flows, report `WARNING`
    - Profile/load-context clarity present (scenario type and expected profile intensity are inferable); if missing, report `WARNING`

@@ -35,6 +35,14 @@ export default function runCsvDataScenario() {
 ```javascript
 import { SharedArray } from 'k6/data';
 
+function parseJsonOrFail(raw, sourceName) {
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`Invalid JSON in ${sourceName}: ${err.message}`);
+  }
+}
+
 const products = new SharedArray('products', function () {
   return parseJsonOrFail(open('./data/products.json'), 'products.json');
 });

@@ -7,7 +7,7 @@ license: MIT
 metadata:
    version: 0.1.0
    category: performance-testing
-   protocols: [http, grpc, browser]
+   protocols: [http, grpc, browser, websocket]
 ---
 - User says: "generate runnable k6 script for this endpoint"
 - User says: "build dev/staging/prod config with thresholds"
@@ -286,7 +286,7 @@ When generating thresholds, apply the correct metric per protocol. Using `http_r
 | Protocol | Required threshold metric |
 |---|---|
 | HTTP | `http_req_duration: ['p(95)<Nms']` |
-| WebSocket | `ws_session_duration: ['p(95)<Nms']` (custom Trend — `http_req_duration` does not capture WS latency) |
+| WebSocket | `ws_session_duration: ['p(95)<Nms']` (built-in session duration metric) |
 | gRPC | `grpc_req_duration: ['p(99)<Nms']` |
 | Browser | `browser_http_req_duration: ['p(95)<Nms']` |
 
@@ -300,13 +300,16 @@ When generating artifacts (single or multi-environment):
 **For HTTP/gRPC/Browser protocols:**
 - If `target` is explicitly provided (literal URL), wrap it in `__ENV`:
   ```javascript
-  const BASE_URL = __ENV.BASE_URL || 'https://api.example.com';  // fallback for local testing
+   if (!__ENV.BASE_URL) {
+      throw new Error('BASE_URL environment variable is required');
+   }
+   const BASE_URL = __ENV.BASE_URL;
   ```
 - **Never emit**: `const BASE_URL = 'https://api.example.com';` (hardcoded literal without `__ENV`)
 - Exception: Only if user explicitly asks for hardcoded URL (e.g., "quick smoke test for local"), document as assumption.
 
 **For multi-environment outputs:**
-- Always use pattern: `__ENV[`${env.toUpperCase()}_API_URL`]`
+- Always use pattern: `__ENV[`${env.toUpperCase()}_BASE_URL`]`
 - Append a `.env.example` stub with all required variables.
 
 **Validation**: After artifact generation, scan for violations:
@@ -339,16 +342,17 @@ When generating artifacts (single or multi-environment):
 ### WebSocket
 - Use `ws.connect()` from `k6/ws` and handle all lifecycle events: `on('open')`, `on('message')`, `on('error')`, `on('close')`.
 - Always add a bounded session duration to avoid infinitely hanging connections.
-- **WebSocket latency threshold is required**: `http_req_duration` does not capture WebSocket latency. Use a custom `Trend` metric and include it in `thresholds`:
+- **WebSocket latency thresholds are required**: `http_req_duration` does not capture WebSocket behavior. Use built-in `ws_session_duration` for session duration and a custom `Trend` for per-message latency:
   ```js
   import { Trend } from 'k6/metrics';
-  const wsLatency = new Trend('ws_session_duration');
+   const wsLatency = new Trend('ws_message_latency');
   // in default function, record per-message timing:
   // wsLatency.add(Date.now() - sentAt);
   // in options.thresholds:
-  // ws_session_duration: ['p(95)<150']
+   // ws_session_duration: ['p(95)<1500']
+   // ws_message_latency: ['p(95)<150']
   ```
-- Add to guardrail checklist: `[ ] WebSocket script includes ws_session_duration Trend with p(95) threshold`.
+- Add to guardrail checklist: `[ ] WebSocket script includes builtin ws_session_duration and custom ws_message_latency thresholds`.
 </protocol-patterns>
 
 ## Dashboard Policy
@@ -387,7 +391,7 @@ Every response must include these sections in order:
      
      Run k6-validate to check this smoke artifact:
      
-     k6-validate <your-plan-or-test-config>
+   /k6-validate <your-plan-or-test-config>
      ```
    - **For other scenarios** (load, stress, soak, spike): Include validation recommendation that references k6-validate.
 10. Next recommended step

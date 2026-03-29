@@ -9,6 +9,8 @@ Copy-paste-ready templates for common validation findings.
 
 **Before**
 ```javascript
+import http from 'k6/http';
+
 export default function() {
   http.get(`${__ENV.BASE_URL}/health`, { timeout: '30s' });
 }
@@ -16,6 +18,8 @@ export default function() {
 
 **After**
 ```javascript
+import http from 'k6/http';
+
 export default function runHttpSmoke() {
   http.get(`${__ENV.BASE_URL}/health`, { timeout: '30s' });
 }
@@ -115,6 +119,8 @@ http.get(`${__ENV.BASE_URL}/users`, { timeout: '30s' });
 
 **Before**
 ```javascript
+import { browser } from 'k6/browser';
+
 export default async function runBrowserFlow() {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -130,6 +136,8 @@ export default async function runBrowserFlow() {
 
 **After**
 ```javascript
+import { browser } from 'k6/browser';
+
 export default async function runBrowserFlow() {
   const context = await browser.newContext();
   const page = await context.newPage();
