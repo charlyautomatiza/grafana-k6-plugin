@@ -20,7 +20,7 @@ These skills enable Claude to plan, generate, and validate k6 performance testin
 ### Key Features
 
 - **🎯 Deterministic Recommendations**: Same inputs always produce identical outputs
-- **💬 Interactive Clarification**: 3-question protocol for resolving ambiguities
+- **💬 Interactive Clarification**: Adaptive question flow for target, scenario, SLA, protocol, and critical gaps
 - **📊 Protocol Support**: HTTP, gRPC, and k6/browser
 - **✅ Best Practices**: Follows official k6.io documentation patterns
 - **🔍 Validation**: Built-in script validation and quality checks
@@ -38,7 +38,7 @@ This repository is aligned with the **official Claude Skills specification**.
 - ✅ **Self-contained SKILL.md files** with all logic embedded
 - ✅ **Per-skill references directories** for focused guidance
 - ✅ **Simplified plugin.json** with only standard fields (auto-discovery of skills)
-- ✅ **Four core skills**: k6-plan, k6-executor, k6-config, k6-validate
+- ✅ **Three core skills**: k6-plan, k6-builder, k6-validate
 - ✅ **Deterministic recommendations** - same inputs always produce identical outputs
 
 ## 🚀 Quick Start
@@ -72,6 +72,42 @@ In Claude, try:
 ```
 
 You should get a complete, actionable test plan with recommendations.
+
+Note: `protocol` is resolved in the interactive flow when needed. If omitted, the skill can ask you to confirm whether the test should use `http`, `grpc`, or `browser`.
+
+## 🚀 First 5 Minutes
+
+Copy and paste these prompts directly in Claude. You do not need to memorize command syntax to get started.
+
+### Plan first (`/k6-plan`)
+
+> I need a practical load test plan for my users API. Keep p95 below 500ms and errors below 1%.
+
+> Help me design a stress test to find the breaking point of my service, ramping safely to high load.
+
+> I need a performance plan for a gRPC service with p99 under 200ms.
+
+> Create a browser-focused performance test plan for my checkout journey and tell me the next best step.
+
+### Build runnable artifacts (`/k6-builder`)
+
+> Generate a runnable k6 script for my product API with thresholds aligned to p95<400ms and error<1%.
+
+> Build a multi-environment setup (dev, staging, prod) with safe env-variable placeholders.
+
+> Create runnable browser scenario artifacts for login and checkout, with clear assumptions.
+
+> I need a gRPC load test script template with auth handled through environment variables.
+
+### Validate scripts (`/k6-validate`)
+
+> Review this k6 script and flag critical issues that could invalidate results.
+
+> Validate whether my thresholds and checks are coherent with the SLA goals.
+
+> Analyze this script for CI safety, flaky patterns, and risky defaults.
+
+> Give me prioritized fixes to make this script production-ready.
 
 ## 🌐 Global Language Policy
 
@@ -111,14 +147,27 @@ Layout rules:
 
 ## 📖 Skills Reference
 
-This skill provides four self-contained skills:
+This repository provides a three-skill lifecycle:
 
 ### `/k6-plan` - Interactive Test Planning
 
-Create comprehensive k6 performance test plans from requirements. Generates textual plans by default, or complete scripts when explicitly requested.
+Create comprehensive k6 performance test plans from requirements. This skill returns textual plans only. Runnable scripts and configuration outputs are handled by `/k6-builder`.
+
+Natural-language examples (copy/paste in Claude):
+
+> Plan a load test for my API with p95 under 400ms and error rate under 1%.
+
+> I need a stress strategy to discover capacity limits safely and progressively.
+
+> Build a gRPC test plan with p99 below 200ms and explain assumptions.
+
+> I want a browser journey performance plan for login and checkout.
+
+> Give me the plan first and then the single next best action.
 
 Deterministic planning gates:
-- HTTP method confirmation for endpoint-sensitive flows
+- Adaptive clarification flow for missing `target`, `scenario`, `sla`, and `protocol`
+- HTTP method confirmation for endpoint-sensitive HTTP flows
 - Auth discovery (none, bearer, API key, basic, mTLS, session)
 - Exactly one `Next recommended step` in final output
 
@@ -127,19 +176,19 @@ Project layout guidance:
 - Env templates may use `src/env/.env.example`
 - Generated reports under `src/reports/` are local artifacts and should not be committed
 
-**Parameters**:
+Technical parameters:
 - `scenario` (required): Test type - `load`, `stress`, `spike`, `soak`, `smoke`
 - `target` (required): URL or endpoint to test
 - `sla` (required): Performance requirements (e.g., `p95<500ms,error<1%`)
+- `protocol` (resolved in interactive clarification when needed): `http`, `grpc`, `browser`
 - `profile` (optional): Load size - `minimal`, `standard`, `aggressive` (default: `standard`)
-- `protocol` (optional): Protocol type - `http`, `grpc`, `browser` (default: `http`)
 - `duration` (optional): Test duration override (e.g., `10m`)
 - `vus` (optional): Virtual users override (e.g., `50`)
-- `output` (optional): Set to `script` to generate executable k6 code
 
-**Examples**:
+Technical command examples:
+
 ```bash
-# Basic HTTP load test plan
+# Basic load test plan
 /k6-plan scenario=load target=https://api.example.com sla=p95<300ms
 
 # Aggressive stress test
@@ -150,69 +199,79 @@ Project layout guidance:
 
 # gRPC service test
 /k6-plan protocol=grpc target=grpc.example.internal:9000 scenario=load sla=p95<200ms
-
-# Generate executable script
-/k6-plan scenario=load target=https://api.example.com sla=p95<300ms output=script
 ```
 
-### `/k6-executor` - Executor Selection Guide
+### `/k6-builder` - Runnable Artifact Generation
 
-Get recommendations for the optimal k6 executor type based on your test goals.
+Generate runnable k6 scripts and environment-ready configuration from a plan or direct requirements.
 
-**Parameters**:
-- `goal` (required): What you want to test (e.g., "validate 500 RPS sustained")
+Natural-language examples (copy/paste in Claude):
 
-**Examples**:
+> Generate a runnable k6 script for my catalog API with p95 under 400ms.
+
+> Build dev, staging, and prod configuration files using safe placeholders.
+
+> Create browser test artifacts for checkout and include guardrails.
+
+> Build a gRPC load test script with authentication via environment variables.
+
+> Recommend the best executor and give me runnable output directly.
+
+Deterministic generation gates:
+- Adaptive clarification flow for missing `target`, `scenario`, `sla`, and `protocol`
+- HTTP method confirmation for endpoint-sensitive HTTP flows
+- Auth discovery for secure runnable output
+- Exactly one `Next recommended step` in final output
+
+Technical parameters:
+- `target` (required): URL or endpoint to test
+- `scenario` (required): Test type - `load`, `stress`, `spike`, `soak`, `smoke`
+- `sla` (required): Performance requirements (e.g., `p95<500ms,error<1%`)
+- `protocol` (resolved in interactive clarification when needed): `http`, `grpc`, `browser`
+- `profile` (optional): `minimal`, `standard`, `aggressive` (default: `standard`)
+- `duration` (optional): Test duration override (e.g., `10m`)
+- `vus` (optional): Virtual users override (e.g., `50`)
+- `environments` (optional): Comma-separated env list for multi-env config (e.g., `dev,staging,prod`)
+- `goal` (optional): Natural language objective to bias executor/config decisions
+
+Technical command examples:
+
 ```bash
-# Clear goal
-/k6-executor goal=validate we can handle 500 requests per second
+# Build runnable script from direct requirements
+/k6-builder scenario=load target=https://api.example.com sla=p95<300ms
 
-# Baseline testing
-/k6-executor goal=baseline testing with 50 concurrent users
+# Build multi-environment config
+/k6-builder scenario=load target=https://api.example.com sla=p95<500ms environments=dev,staging,prod
 
-# Find capacity limits
-/k6-executor goal=find the breaking point of our API
+# Build browser scenario artifacts
+/k6-builder protocol=browser scenario=load target=https://shop.example.com sla=p95<2s
 ```
 
 ### `/k6-validate` - Script Validation
 
 Validate k6 scripts for best practices, common issues, and performance anti-patterns.
 
-**Parameters**:
+Natural-language examples (copy/paste in Claude):
+
+> Review this k6 script and tell me what would fail in CI.
+
+> Validate thresholds, checks, and scenario configuration against my SLA goals.
+
+> Flag anti-patterns that can bias performance test results.
+
+> Provide a prioritized remediation list for this script.
+
+Technical parameters:
 - `script` (required): Path to k6 script file
 
-**Examples**:
+Technical command examples:
+
 ```bash
 # Validate a script
 /k6-validate script=./load-test.js
 
 # Check best practices
 /k6-validate script=./api-test.js
-```
-
-### `/k6-config` - Multi-Environment Configuration
-
-Generate environment-specific k6 configurations with best practices for secrets management.
-
-Dashboard policy:
-- Local exploratory runs: can recommend `K6_WEB_DASHBOARD=true`
-- CI/headless runs: dashboard disabled by default
-
-Secrets policy:
-- Commit only `.env.example` templates with placeholders
-- Do not commit `.env.dev`, `.env.staging`, `.env.prod`, or any env file containing live values
-- Treat `src/reports/` as generated output, not source code
-
-**Parameters**:
-- `environments` (required): Comma-separated list of environments (e.g., `dev,staging,prod`)
-
-**Examples**:
-```bash
-# Generate configs for all environments
-/k6-config environments=dev,staging,prod
-
-# Development and production only
-/k6-config environments=dev,prod
 ```
 
 ## 🎓 Usage Patterns
@@ -266,7 +325,10 @@ I need to clarify a few details before generating your k6 script:
      - p99 < 1s (relaxed)
      - Custom: (please specify)
 
-3. **What test duration do you need?** (optional - default is 5 minutes)
+3. **Which protocol should this test use?**
+  - Options: http, grpc, browser
+
+4. **What test duration do you need?** (optional - default profile applies)
 ```
 
 **You Answer**:
@@ -276,7 +338,7 @@ I need to clarify a few details before generating your k6 script:
 3. 10 minutes
 ```
 
-**Agent Generates**: Complete k6 script with your specifications!
+**Agent Generates**: Complete k6 plan and the next step to build runnable artifacts.
 
 ## 🏗️ Architecture
 
@@ -290,15 +352,12 @@ grafana-k6-skill/
 │   ├── k6-plan/
 │   │   ├── SKILL.md        # Complete planning logic + examples
 │   │   └── references/     # Protocol/load/SLA/data guides
-│   ├── k6-executor/
-│   │   ├── SKILL.md        # Executor selection guide
-│   │   └── references/     # Decision matrix and support docs
+│   ├── k6-builder/
+│   │   ├── SKILL.md        # Runnable artifact generation logic
+│   │   └── references/     # Executor/load/SLA/protocol/data guides
 │   ├── k6-validate/
 │   │   ├── SKILL.md        # Validation checklist
 │   │   └── references/     # Severity and validation rules
-│   └── k6-config/
-│       ├── SKILL.md        # Multi-env configuration
-│       └── references/     # Config/load/SLA/data guides
 ├── LICENSE
 └── README.md
 ```
@@ -344,9 +403,8 @@ The skill follows the [Agent Skills specification](https://agentskills.io/specif
 
 Skills can be customized by editing the SKILL.md files directly:
 - `skills/k6-plan/SKILL.md` - Modify planning logic, rules, or examples
-- `skills/k6-executor/SKILL.md` - Adjust executor recommendations
+- `skills/k6-builder/SKILL.md` - Adjust runnable generation logic and configuration behavior
 - `skills/k6-validate/SKILL.md` - Customize validation rules
-- `skills/k6-config/SKILL.md` - Change configuration patterns
 
 Reference materials in each skill's `references/` directory can also be updated to provide additional context for Claude.
 
@@ -355,14 +413,8 @@ Reference materials in each skill's `references/` directory can also be updated 
 Each skill includes local references with validated patterns and implementation details:
 
 - `skills/k6-plan/references/` — protocol patterns, SLA defaults, load profiles, data integration
-- `skills/k6-executor/references/` — executor decision matrix and profile guidance
+- `skills/k6-builder/references/` — executor decision matrix, protocol patterns, SLA defaults, load profiles, and data integration
 - `skills/k6-validate/references/` — severity model, threshold/load validation rules, testing guide
-- `skills/k6-config/references/` — environment configuration patterns and defaults
-
-Generate a runnable script via skill command:
-```bash
-/k6-plan scenario=load target=https://api.example.com sla=p95<300ms output=script
-```
 
 ## 🧪 Validation
 
@@ -434,7 +486,7 @@ npx skills remove charlyautomatiza/grafana-k6-skill
 
 ### Interactive questions not asking
 
-- Ensure you've omitted required parameters (target, scenario, or sla)
+- Ensure you've omitted required parameters (target, scenario, sla, or protocol)
 - Check Claude version supports interactive tools
 - Try providing more context in your request
 
@@ -469,4 +521,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Happy Load Testing! 🚀**
+**Happy Performance Testing! 🚀**

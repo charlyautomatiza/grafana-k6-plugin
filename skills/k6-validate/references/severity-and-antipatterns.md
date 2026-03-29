@@ -25,7 +25,7 @@
 |----------|------|----------|-----|
 | No thresholds defined | ERROR | MUST have at least one threshold | Add threshold (e.g., `p95<500`) |
 | Only Checks Pass Rate threshold, no latency/error metrics | WARNING | Checks alone are insufficient for SLA validation | Add latency and error-rate thresholds |
-| Inconsistent across environments | WARNING | Same test, different thresholds per env | Document environment-specific SLAs |
+| Inconsistent across environments (single declared SLA) | ERROR | Violates cross-environment SLA coherence and breaks comparability | Align thresholds to one SLA across all envs |
 | p95 > p99 | ERROR | Invalid percentile relationship (p95 must be ≤ p99) | Swap values or fix percentile order |
 | Error threshold > 5% | WARNING | Too lenient for most SLAs | Tighten error rate threshold |
 

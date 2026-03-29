@@ -8,6 +8,7 @@ Detailed validation criteria, severity models, and remediation playbooks for k6 
 - **[threshold-validation-rules.md](threshold-validation-rules.md)** — Threshold range checks and consistency rules
 - **[load-profile-validation-rules.md](load-profile-validation-rules.md)** — VU/duration/stages validation patterns
 - **[goja-k6-compatibility-matrix.md](goja-k6-compatibility-matrix.md)** — JavaScript runtime compatibility, allowed/prohibited modules
+- **[remediation-playbooks.md](remediation-playbooks.md)** — Copy-paste-ready before/after templates for common fixes
 
 ## Core Topics
 
@@ -33,6 +34,17 @@ Each finding includes:
 - **Location** — Line number(s) in script
 - **Remediation** — Code example showing the fix
 - **Why** — Brief explanation of the impact
+
+## Output Contract Alignment
+
+Validation output must stay deterministic and compact:
+
+- Use Markdown artifact name: `validation-report.md`
+- Keep section order aligned with `skills/k6-validate/SKILL.md`
+- Use a compact findings table with columns: `#`, `Severity`, `Finding`, `Recommended Fix`
+- Ensure every finding has severity + at least one actionable fix snippet in `Suggested Fixes`
+- Group findings by severity badge in this order: 🔴, 🟡, ℹ️
+- Add a fix priority matrix with estimated remediation time
 
 ## Scripted Validation Procedures
 

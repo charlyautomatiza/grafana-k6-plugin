@@ -1,7 +1,7 @@
 {
   "name": "grafana-k6",
   "version": "0.1.0",
-  "description": "Claude Skills for k6 performance testing with interactive planning, executor selection, script validation, and multi-environment configuration",
+  "description": "Claude Skills for k6 performance testing with plan-builder-validate lifecycle: planning strategy, runnable artifact generation, and script/config quality validation",
   "author": {
     "name": "charlyautomatiza",
     "url": "https://github.com/charlyautomatiza/grafana-k6-skill"

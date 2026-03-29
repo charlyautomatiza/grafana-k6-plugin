@@ -158,11 +158,15 @@ if (!GRPC_ADDR) {
 
 const client = new grpc.Client();
 client.load(['definitions'], 'service.proto');
+let grpcConnected = false;
 
 export default function runGrpcUnaryCall() {
-  client.connect(GRPC_ADDR, {
-    plaintext: false,
-  });
+  if (!grpcConnected) {
+    client.connect(GRPC_ADDR, {
+      plaintext: false,
+    });
+    grpcConnected = true;
+  }
   
   const request = { name: 'test' };
   const response = client.invoke('service.Method', request);
@@ -170,8 +174,12 @@ export default function runGrpcUnaryCall() {
   check(response, {
     'status is OK': (r) => r && r.status === grpc.StatusOK,
   });
-  
-  client.close();
+}
+
+export function teardown() {
+  if (grpcConnected) {
+    client.close();
+  }
 }
 ```
 

@@ -16,9 +16,11 @@ const csvData = new SharedArray('users', function () {
   return papaparse.parse(open('./data/users.csv'), { header: true }).data;
 });
 
-export default function () {
+export default function runCsvDataScenario() {
   const user = csvData[Math.floor(Math.random() * csvData.length)];
-  console.log(`Testing with user: ${user.username}`);
+  if (!user || !user.username) {
+    throw new Error('CSV row must contain username');
+  }
 }
 ```
 
@@ -34,10 +36,10 @@ export default function () {
 import { SharedArray } from 'k6/data';
 
 const products = new SharedArray('products', function () {
-  return JSON.parse(open('./data/products.json'));
+  return parseJsonOrFail(open('./data/products.json'), 'products.json');
 });
 
-export default function () {
+export default function runJsonDataScenario() {
   const product = products[__ITER % products.length];
   // Use product data...
 }
@@ -61,12 +63,37 @@ if (!BASE_URL || !API_TOKEN) {
   throw new Error('BASE_URL and API_TOKEN environment variables are required');
 }
 
-export default function () {
+export default function runEnvDataScenario() {
   const response = http.get(`${BASE_URL}/api/data`, {
     headers: { 'Authorization': `Bearer ${API_TOKEN}` },
     timeout: '30s',
     tags: { name: 'api-data' },
   });
+}
+```
+
+## Auth Discovery and Data Contracts
+
+Before generating executable scripts with request data:
+
+1. Confirm whether auth fields are present in the selected dataset.
+2. Validate required keys for the selected method (for example, ID for `GET`, payload fields for `POST`).
+3. Fail fast with clear errors when required fields are missing.
+4. Keep secrets in `__ENV`; never store them in CSV/JSON fixtures.
+5. If environment setup is documented, use a committed `.env.example` with placeholders only.
+6. Do not recommend committing real `.env` files or generated reports.
+
+## Safe Parsing Pattern
+
+Use guarded parsing for dynamic JSON payloads:
+
+```javascript
+function parseJsonOrFail(raw, sourceName) {
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`Invalid JSON in ${sourceName}: ${err.message}`);
+  }
 }
 ```
 

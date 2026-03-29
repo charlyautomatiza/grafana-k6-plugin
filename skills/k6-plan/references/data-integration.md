@@ -16,9 +16,11 @@ const csvData = new SharedArray('users', function () {
   return papaparse.parse(open('./data/users.csv'), { header: true }).data;
 });
 
-export default function () {
+export default function runCsvDataScenario() {
   const user = csvData[Math.floor(Math.random() * csvData.length)];
-  console.log(`Testing with user: ${user.username}`);
+  if (!user || !user.username) {
+    throw new Error('CSV row must contain username');
+  }
 }
 ```
 
@@ -33,11 +35,19 @@ export default function () {
 ```javascript
 import { SharedArray } from 'k6/data';
 
+function parseJsonOrFail(raw, sourceName) {
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`Invalid JSON in ${sourceName}: ${err.message}`);
+  }
+}
+
 const products = new SharedArray('products', function () {
-  return JSON.parse(open('./data/products.json'));
+  return parseJsonOrFail(open('./data/products.json'), 'products.json');
 });
 
-export default function () {
+export default function runJsonDataScenario() {
   const product = products[__ITER % products.length];
   // Use product data...
 }
@@ -61,7 +71,7 @@ if (!BASE_URL || !API_TOKEN) {
   throw new Error('BASE_URL and API_TOKEN environment variables are required');
 }
 
-export default function () {
+export default function runEnvDataScenario() {
   const response = http.get(`${BASE_URL}/api/data`, {
     headers: { 'Authorization': `Bearer ${API_TOKEN}` },
     timeout: '30s',
