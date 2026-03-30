@@ -47,20 +47,20 @@ This repository is aligned with the **official Claude Skills specification**.
 
 #### Via skills.sh (Recommended)
 ```bash
-npx skills add charlyautomatiza/grafana-k6-skill
+npx skills add charlyautomatiza/grafana-k6-plugin
 ```
 
 #### Manual Installation (Claude Desktop)
 Clone to a location where Claude can auto-discover:
 ```bash
-git clone https://github.com/charlyautomatiza/grafana-k6-skill.git ~/claude-skills/grafana-k6
+git clone https://github.com/charlyautomatiza/grafana-k6-plugin.git ~/claude-skills/grafana-k6
 # Claude will auto-detect skills in this directory
 ```
 
 #### Verification
 List available skills:
 ```bash
-npx skills list charlyautomatiza/grafana-k6-skill
+npx skills list charlyautomatiza/grafana-k6-plugin
 ```
 
 ### First Test
@@ -345,7 +345,7 @@ I need to clarify a few details before generating your k6 script:
 This skill follows the **official Claude Skills specification**. Each skill is a self-contained `SKILL.md` file that Claude interprets directly.
 
 ```
-grafana-k6-skill/
+grafana-k6-plugin/
 ├── .claude-plugin/
 │   ├── plugin.json          # Skill metadata (standard fields only)
 ├── skills/                  # Self-contained skills
@@ -386,7 +386,7 @@ grafana-k6-skill/
 This skill is distributed via the skills.sh ecosystem:
 
 ```bash
-npx skills add charlyautomatiza/grafana-k6-skill
+npx skills add charlyautomatiza/grafana-k6-plugin
 ```
 
 The skill follows the [Agent Skills specification](https://agentskills.io/specification) and is automatically discoverable by Claude.
@@ -395,7 +395,7 @@ The skill follows the [Agent Skills specification](https://agentskills.io/specif
 
 | Channel | Status | Installation Method |
 |---------|--------|-------------------|
-| **skills.sh CLI** | ✅ Ready | `npx skills add charlyautomatiza/grafana-k6-skill` |
+| **skills.sh CLI** | ✅ Ready | `npx skills add charlyautomatiza/grafana-k6-plugin` |
 | **Claude Desktop** | ✅ Ready | Auto-discovery or manual git clone |
 | **Self-Hosted** | ⚠️ Not configured in this repository | Requires additional marketplace catalog setup |
 
@@ -452,12 +452,12 @@ The skill enforces best practices. Every generated script includes:
 To get the latest repository changes:
 
 ```bash
-npx skills update charlyautomatiza/grafana-k6-skill
+npx skills update charlyautomatiza/grafana-k6-plugin
 ```
 
 Or manually:
 ```bash
-cd grafana-k6-skill
+cd grafana-k6-plugin
 git pull origin main
 ```
 
@@ -466,7 +466,7 @@ git pull origin main
 Remove the skill:
 
 ```bash
-npx skills remove charlyautomatiza/grafana-k6-skill
+npx skills remove charlyautomatiza/grafana-k6-plugin
 ```
 
 ## 🐛 Troubleshooting
@@ -511,7 +511,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **charlyautomatiza**
 - GitHub: [@charlyautomatiza](https://github.com/charlyautomatiza)
-- Repository: [grafana-k6-skill](https://github.com/charlyautomatiza/grafana-k6-skill)
+- Repository: [grafana-k6-plugin](https://github.com/charlyautomatiza/grafana-k6-plugin)
 
 ## 🙏 Acknowledgments
 
